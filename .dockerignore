@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+node_modules/
+dist/
+backend/static/
+backend/data/
+.git/
+.DS_Store
+*.swp
+deploy/

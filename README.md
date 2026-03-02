@@ -32,11 +32,33 @@ npm install && npm run dev   # http://localhost:5173
 
 **Production:** `cd frontend && npm run build` then `cd ../backend && python main.py` — serves everything at `:8000`.
 
+## Deploy
+
+```bash
+# Docker (simplest)
+docker compose up --build          # http://localhost:8000
+
+# AWS EKS via Terraform
+cd deploy/terraform-k8s && terraform init && terraform apply
+
+# AWS ECS Fargate via CDK
+cd deploy/aws-cdk && cdk deploy
+```
+
+Each option handles Pixeltable's persistent storage (embedded PostgreSQL + file cache) via volumes. For large media files, configure external blob storage:
+
+```bash
+PIXELTABLE_INPUT_MEDIA_DEST=s3://your-bucket/input
+PIXELTABLE_OUTPUT_MEDIA_DEST=s3://your-bucket/output
+```
+
+See [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md) and `deploy/` READMEs for details.
+
 ## Project Structure
 
 ```
 backend/
-├── main.py                 FastAPI app, CORS, static serving
+├── main.py                 FastAPI app, CORS, routers, SPA fallback
 ├── config.py               Model IDs, system prompts, env overrides
 ├── models.py               Pydantic models (row schemas + API responses)
 ├── functions.py            @pxt.udf definitions (web search, context assembly)
@@ -52,6 +74,10 @@ frontend/src/
 ├── components/             Page components + shared UI (Button, Badge)
 ├── lib/api.ts              Typed fetch wrapper
 └── types/index.ts          Shared interfaces
+
+deploy/
+├── terraform-k8s/          Terraform + EKS (1-click K8s deployment)
+└── aws-cdk/                AWS CDK + ECS Fargate
 ```
 
 ## Learn More

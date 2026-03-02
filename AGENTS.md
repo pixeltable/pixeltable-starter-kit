@@ -41,6 +41,10 @@ frontend/src/
 ├── components/              Page components + shared UI (Button, Badge)
 ├── lib/api.ts               Typed fetch wrapper mirroring backend response models
 └── types/index.ts           TypeScript interfaces matching Pydantic models
+
+deploy/
+├── terraform-k8s/           Terraform + EKS (VPC, cluster, ECR, K8s manifests)
+└── aws-cdk/                 CDK + ECS Fargate (VPC, EFS, ALB, auto-scaling)
 ```
 
 ## Setup
@@ -105,6 +109,15 @@ The entire tool-calling agent is a chain of `add_computed_column()` calls on the
 ### Typed frontend
 
 TypeScript interfaces in `types/index.ts` mirror the backend Pydantic models. `lib/api.ts` is a generic typed fetch wrapper — no code generation, no heavy HTTP client. Intentionally simple for a template.
+
+### Containerized deployment
+
+A multi-stage `Dockerfile` builds the frontend and Python runtime into a single image. `docker-compose.yml` runs it locally with named volumes for Pixeltable data. Two cloud deployment options live in `deploy/`:
+
+- **`deploy/terraform-k8s/`** — Terraform provisions an EKS cluster, ECR repo, and K8s resources (namespace, PVC, schema init job, deployment, LoadBalancer). Pixeltable data persists on a 50Gi EBS volume.
+- **`deploy/aws-cdk/`** — CDK deploys an ECS Fargate service behind an ALB with EFS for persistent storage. Auto-scales 1–4 tasks.
+
+Both configure `PIXELTABLE_HOME=/data/pixeltable` pointing to persistent storage. For large media workloads, set `PIXELTABLE_INPUT_MEDIA_DEST` and `PIXELTABLE_OUTPUT_MEDIA_DEST` to S3 URIs (see [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md)).
 
 ### SPA fallback
 

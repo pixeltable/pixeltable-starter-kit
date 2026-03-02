@@ -1,0 +1,8 @@
+region             = "us-west-2"
+cluster_name       = "pixeltable-app"
+node_instance_type = "m6i.xlarge"
+node_count         = 2
+
+# Sensitive — pass via TF_VAR_anthropic_api_key env var or -var flag
+# anthropic_api_key = ""
+# openai_api_key    = ""

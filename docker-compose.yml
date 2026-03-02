@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      PIXELTABLE_HOME: /data/pixeltable
+      CORS_ORIGINS: "*"
+    volumes:
+      - pixeltable-data:/data/pixeltable
+      - uploads:/app/data
+
+volumes:
+  pixeltable-data:
+  uploads:
