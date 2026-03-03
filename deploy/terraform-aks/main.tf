@@ -120,85 +120,32 @@ resource "kubernetes_persistent_volume_claim" "pixeltable_data" {
   }
 }
 
-# ── Schema init Job ──────────────────────────────────────────────────────────
-
-locals {
-  image_url = "${azurerm_container_registry.acr.login_server}/pixeltable-app:latest"
-}
-
-resource "kubernetes_job" "schema_init" {
-  metadata {
-    name      = "pixeltable-schema-init"
-    namespace = kubernetes_namespace.app.metadata[0].name
-  }
-
-  spec {
-    template {
-      metadata {
-        labels = { app = "pixeltable-init" }
-      }
-
-      spec {
-        restart_policy = "OnFailure"
-
-        container {
-          name    = "init"
-          image   = local.image_url
-          command = ["uv", "run", "python", "setup_pixeltable.py"]
-
-          env_from {
-            secret_ref {
-              name = kubernetes_secret.api_keys.metadata[0].name
-            }
-          }
-
-          env {
-            name  = "PIXELTABLE_HOME"
-            value = "/data/pixeltable"
-          }
-
-          volume_mount {
-            name       = "pixeltable-data"
-            mount_path = "/data/pixeltable"
-          }
-        }
-
-        volume {
-          name = "pixeltable-data"
-          persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.pixeltable_data.metadata[0].name
-          }
-        }
-      }
-    }
-
-    backoff_limit = 3
-  }
-
-  wait_for_completion = true
-  timeouts { create = "10m" }
-}
-
 # ── Deployment ───────────────────────────────────────────────────────────────
 
-resource "kubernetes_deployment" "app" {
-  depends_on = [kubernetes_job.schema_init]
+locals {
+  image_url = "${azurerm_container_registry.acr.login_server}/pixeltable-starter:latest"
+}
 
+resource "kubernetes_deployment" "app" {
   metadata {
-    name      = "pixeltable-app"
+    name      = "pixeltable-starter"
     namespace = kubernetes_namespace.app.metadata[0].name
   }
 
   spec {
     replicas = 1
 
+    strategy {
+      type = "Recreate"
+    }
+
     selector {
-      match_labels = { app = "pixeltable-app" }
+      match_labels = { app = "pixeltable-starter" }
     }
 
     template {
       metadata {
-        labels = { app = "pixeltable-app" }
+        labels = { app = "pixeltable-starter" }
       }
 
       spec {
@@ -206,8 +153,10 @@ resource "kubernetes_deployment" "app" {
           name  = "app"
           image = local.image_url
 
-          command = ["uv", "run", "uvicorn", "main:app",
-            "--host", "0.0.0.0", "--port", "8000", "--workers", "4"
+          # Schema init + server in same container (Pixeltable's embedded
+          # Postgres must stay alive — separate Jobs leave stale PID files)
+          command = ["sh", "-c",
+            "uv run python setup_pixeltable.py && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"
           ]
 
           port {
@@ -251,8 +200,8 @@ resource "kubernetes_deployment" "app" {
               path = "/api/health"
               port = 8000
             }
-            initial_delay_seconds = 30
-            period_seconds        = 10
+            initial_delay_seconds = 60
+            period_seconds        = 30
           }
 
           readiness_probe {
@@ -260,8 +209,8 @@ resource "kubernetes_deployment" "app" {
               path = "/api/health"
               port = 8000
             }
-            initial_delay_seconds = 10
-            period_seconds        = 5
+            initial_delay_seconds = 30
+            period_seconds        = 10
           }
         }
 
@@ -280,12 +229,12 @@ resource "kubernetes_deployment" "app" {
 
 resource "kubernetes_service" "app" {
   metadata {
-    name      = "pixeltable-app"
+    name      = "pixeltable-starter"
     namespace = kubernetes_namespace.app.metadata[0].name
   }
 
   spec {
-    selector = { app = "pixeltable-app" }
+    selector = { app = "pixeltable-starter" }
 
     port {
       port        = 80

@@ -7,7 +7,7 @@ variable "region" {
 variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
-  default     = "pixeltable-app"
+  default     = "pixeltable-starter"
 }
 
 variable "node_instance_type" {
@@ -37,5 +37,5 @@ variable "openai_api_key" {
 variable "ecr_repository_name" {
   description = "ECR repository name for the app image"
   type        = string
-  default     = "pixeltable-app"
+  default     = "pixeltable-starter"
 }

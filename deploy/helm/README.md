@@ -1,4 +1,4 @@
-# Helm Chart — Pixeltable App Template
+# Helm Chart — Pixeltable Starter Kit
 
 Deploy the Pixeltable app on **any existing Kubernetes cluster** using Helm.
 
@@ -14,12 +14,12 @@ Unlike the Terraform configs (which provision the cluster from scratch), this ch
 
 ```bash
 # Build and push image to your registry
-docker build -t <your-registry>/pixeltable-app:latest .
-docker push <your-registry>/pixeltable-app:latest
+docker build -t <your-registry>/pixeltable-starter:latest .
+docker push <your-registry>/pixeltable-starter:latest
 
 # Install the chart
-helm install pixeltable-app ./deploy/helm/pixeltable-app \
-  --set image.repository=<your-registry>/pixeltable-app \
+helm install pixeltable-starter ./deploy/helm/pixeltable-starter \
+  --set image.repository=<your-registry>/pixeltable-starter \
   --set secrets.OPENAI_API_KEY=sk-... \
   --set secrets.ANTHROPIC_API_KEY=sk-ant-...
 ```
@@ -31,12 +31,12 @@ helm install pixeltable-app ./deploy/helm/pixeltable-app \
 minikube start --cpus=4 --memory=6144
 
 # Build and load image (no registry needed)
-docker build -t pixeltable-app:latest .
-minikube image load pixeltable-app:latest
+docker build -t pixeltable-starter:latest .
+minikube image load pixeltable-starter:latest
 
 # Deploy
-helm install pixeltable-app ./deploy/helm/pixeltable-app \
-  --set image.repository=pixeltable-app \
+helm install pixeltable-starter ./deploy/helm/pixeltable-starter \
+  --set image.repository=pixeltable-starter \
   --set image.pullPolicy=Never \
   --set service.type=NodePort \
   --set secrets.OPENAI_API_KEY=$OPENAI_API_KEY \
@@ -44,21 +44,21 @@ helm install pixeltable-app ./deploy/helm/pixeltable-app \
   --set persistence.size=10Gi
 
 # Wait ~2 min for schema init, then port-forward
-kubectl port-forward svc/pixeltable-app 9000:8000
+kubectl port-forward svc/pixeltable-starter 9000:8000
 # App is at http://localhost:9000
 
 # Clean up
-helm uninstall pixeltable-app
+helm uninstall pixeltable-starter
 minikube stop
 ```
 
 ## Configuration
 
-All values are in `pixeltable-app/values.yaml`. Key options:
+All values are in `pixeltable-starter/values.yaml`. Key options:
 
 | Parameter | Default | Description |
 |---|---|---|
-| `image.repository` | `pixeltable-app` | Container image |
+| `image.repository` | `pixeltable-starter` | Container image |
 | `image.tag` | `latest` | Image tag |
 | `image.pullPolicy` | `IfNotPresent` | Set to `Never` for minikube with local images |
 | `service.type` | `LoadBalancer` | K8s service type (`ClusterIP`, `NodePort`, `LoadBalancer`) |
@@ -79,7 +79,7 @@ All values are in `pixeltable-app/values.yaml`. Key options:
 ## Upgrade
 
 ```bash
-helm upgrade pixeltable-app ./deploy/helm/pixeltable-app --set image.tag=v2
+helm upgrade pixeltable-starter ./deploy/helm/pixeltable-starter --set image.tag=v2
 ```
 
 Set `schemaInit.enabled=false` after the first deployment to skip re-running schema setup on restarts.

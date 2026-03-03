@@ -1,4 +1,4 @@
-"""Schema definition for the Pixeltable App Template.
+"""Schema definition for the Pixeltable Starter Kit.
 
 Run once to initialize the database schema:
     python setup_pixeltable.py

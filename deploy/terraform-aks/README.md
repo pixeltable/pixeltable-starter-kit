@@ -1,6 +1,6 @@
 # Terraform + Kubernetes (AKS) Deployment
 
-One-command deployment of the Pixeltable App Template to Azure Kubernetes Service.
+One-command deployment of the Pixeltable Starter Kit to Azure Kubernetes Service.
 
 ## What gets created
 
@@ -35,9 +35,9 @@ terraform apply -target=azurerm_container_registry.acr \
 ACR=$(terraform output -raw acr_login_server)
 az acr login --name $ACR
 cd ../..
-docker build -t pixeltable-app .
-docker tag pixeltable-app:latest $ACR/pixeltable-app:latest
-docker push $ACR/pixeltable-app:latest
+docker build -t pixeltable-starter .
+docker tag pixeltable-starter:latest $ACR/pixeltable-starter:latest
+docker push $ACR/pixeltable-starter:latest
 
 # 2. Deploy everything
 cd deploy/terraform-aks

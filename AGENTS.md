@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents working with this app template.
+Instructions for AI coding agents working with this starter kit.
 
 ## Pixeltable Resources
 
@@ -13,7 +13,7 @@ Before modifying this codebase, familiarize yourself with Pixeltable:
 
 ## What This Template Is
 
-A skeleton full-stack app demonstrating how to put Pixeltable in production with FastAPI + Pydantic + TypeScript. Three tabs show three interaction patterns:
+A production-ready starter kit demonstrating how to put Pixeltable in production with FastAPI + Pydantic + TypeScript. Three tabs show three interaction patterns:
 
 | Tab | Pattern | Key Pixeltable Features |
 |-----|---------|------------------------|
@@ -42,6 +42,12 @@ frontend/src/
 ├── lib/api.ts               Typed fetch wrapper mirroring backend response models
 └── types/index.ts           TypeScript interfaces matching Pydantic models
 
+pipeline/                        Orchestration-only deployment pattern
+├── pipeline.py                  Batch processing (ingest → compute → export_sql)
+├── udfs.py                      Pixeltable UDFs
+├── Dockerfile                   Ephemeral container
+└── docker-compose.yml           Local testing
+
 deploy/
 ├── helm/                    Helm chart (any existing K8s cluster)
 ├── terraform-k8s/           Terraform + AWS EKS
@@ -53,8 +59,8 @@ deploy/
 ## Setup
 
 ```bash
-git clone https://github.com/pixeltable/pixeltable-app-template.git
-cd pixeltable-app-template
+git clone https://github.com/pixeltable/pixeltable-starter-kit.git
+cd pixeltable-starter-kit
 cp .env.example .env          # add ANTHROPIC_API_KEY and OPENAI_API_KEY
 
 cd backend

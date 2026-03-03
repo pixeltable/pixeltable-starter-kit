@@ -12,7 +12,7 @@ variable "region" {
 variable "cluster_name" {
   description = "GKE cluster name"
   type        = string
-  default     = "pixeltable-app"
+  default     = "pixeltable-starter"
 }
 
 variable "machine_type" {

@@ -21,7 +21,7 @@ export function App() {
       <header className="flex items-center justify-between border-b px-6 h-14 shrink-0">
         <div className="flex items-center gap-6">
           <h1 className="text-base font-semibold tracking-tight">
-            Pixeltable App Template
+            Pixeltable Starter Kit
           </h1>
 
           <nav className="flex items-center gap-1 bg-muted rounded-lg p-1">

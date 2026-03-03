@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: pixeltable-app
+  repository: pixeltable-starter
   tag: latest
   pullPolicy: IfNotPresent
 

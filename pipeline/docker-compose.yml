@@ -1,0 +1,15 @@
+services:
+  pipeline:
+    build: .
+    environment:
+      PIXELTABLE_HOME: /tmp/pixeltable
+      SERVING_DB_URL: "sqlite:///output/serving.db"
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}    # uncomment for summary column
+      # MEDIA_DEST: s3://your-bucket/output   # uncomment for cloud media
+    volumes:
+      - output:/app/output
+    # Override to pass custom args:
+    # command: ["--input", "/app/data/batch.json"]
+
+volumes:
+  output:

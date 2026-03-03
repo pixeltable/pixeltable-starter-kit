@@ -7,13 +7,13 @@ variable "location" {
 variable "cluster_name" {
   description = "AKS cluster name"
   type        = string
-  default     = "pixeltable-app"
+  default     = "pixeltable-starter"
 }
 
 variable "resource_group_name" {
   description = "Azure resource group name"
   type        = string
-  default     = "pixeltable-app-rg"
+  default     = "pixeltable-starter-rg"
 }
 
 variable "vm_size" {

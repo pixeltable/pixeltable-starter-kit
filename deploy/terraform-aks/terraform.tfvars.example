@@ -1,6 +1,6 @@
 location            = "eastus"
-cluster_name        = "pixeltable-app"
-resource_group_name = "pixeltable-app-rg"
+cluster_name        = "pixeltable-starter"
+resource_group_name = "pixeltable-starter-rg"
 vm_size             = "Standard_D4s_v3"
 node_count          = 2
 

@@ -1,6 +1,6 @@
 # Terraform + Kubernetes (GKE) Deployment
 
-One-command deployment of the Pixeltable App Template to Google Kubernetes Engine.
+One-command deployment of the Pixeltable Starter Kit to Google Kubernetes Engine.
 
 ## What gets created
 
@@ -21,9 +21,9 @@ One-command deployment of the Pixeltable App Template to Google Kubernetes Engin
 # 1. Build and push the Docker image
 cd ../..  # repo root
 gcloud auth configure-docker us-central1-docker.pkg.dev
-docker build -t pixeltable-app .
-docker tag pixeltable-app:latest us-central1-docker.pkg.dev/YOUR_PROJECT/pixeltable-app/pixeltable-app:latest
-docker push us-central1-docker.pkg.dev/YOUR_PROJECT/pixeltable-app/pixeltable-app:latest
+docker build -t pixeltable-starter .
+docker tag pixeltable-starter:latest us-central1-docker.pkg.dev/YOUR_PROJECT/pixeltable-starter/pixeltable-starter:latest
+docker push us-central1-docker.pkg.dev/YOUR_PROJECT/pixeltable-starter/pixeltable-starter:latest
 
 # 2. Deploy infrastructure + app
 cd deploy/terraform-gke

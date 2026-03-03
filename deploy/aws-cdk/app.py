@@ -1,4 +1,4 @@
-"""AWS CDK stack: deploys the Pixeltable App Template on ECS Fargate."""
+"""AWS CDK stack: deploys the Pixeltable Starter Kit on ECS Fargate."""
 
 import os
 
@@ -31,7 +31,7 @@ class PixeltableAppStack(Stack):
         secret = secretsmanager.Secret(
             self,
             "ApiSecrets",
-            secret_name="pixeltable-app/api-keys",
+            secret_name="pixeltable-starter/api-keys",
             secret_object_value={
                 "ANTHROPIC_API_KEY": SecretValue.unsafe_plain_text(
                     os.getenv("ANTHROPIC_API_KEY", "")
@@ -119,7 +119,7 @@ class PixeltableAppStack(Stack):
             "App",
             image=ecs.ContainerImage.from_docker_image_asset(image),
             logging=ecs.LogDrivers.aws_logs(
-                stream_prefix="pixeltable-app", log_group=log_group
+                stream_prefix="pixeltable-starter", log_group=log_group
             ),
             secrets={
                 "ANTHROPIC_API_KEY": ecs.Secret.from_secrets_manager(

@@ -1,8 +1,8 @@
-{{- define "pixeltable-app.name" -}}
+{{- define "pixeltable-starter.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "pixeltable-app.fullname" -}}
+{{- define "pixeltable-starter.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -15,15 +15,15 @@
 {{- end }}
 {{- end }}
 
-{{- define "pixeltable-app.labels" -}}
+{{- define "pixeltable-starter.labels" -}}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-app.kubernetes.io/name: {{ include "pixeltable-app.name" . }}
+app.kubernetes.io/name: {{ include "pixeltable-starter.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "pixeltable-app.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "pixeltable-app.name" . }}
+{{- define "pixeltable-starter.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "pixeltable-starter.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

@@ -1,6 +1,6 @@
 # AWS CDK Deployment (ECS Fargate)
 
-Deploys the Pixeltable App Template on ECS Fargate with persistent storage via EFS.
+Deploys the Pixeltable Starter Kit on ECS Fargate with persistent storage via EFS.
 
 ## What gets created
 

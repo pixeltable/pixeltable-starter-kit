@@ -1,4 +1,4 @@
-"""User-Defined Functions (UDFs) for the Pixeltable App Template."""
+"""User-Defined Functions (UDFs) for the Pixeltable Starter Kit."""
 import os
 from typing import Any
 

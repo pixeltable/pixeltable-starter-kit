@@ -1,6 +1,6 @@
 # Terraform + Kubernetes (EKS) Deployment
 
-One-command deployment of the Pixeltable App Template to AWS EKS.
+One-command deployment of the Pixeltable Starter Kit to AWS EKS.
 
 ## What gets created
 
@@ -21,9 +21,9 @@ One-command deployment of the Pixeltable App Template to AWS EKS.
 # 1. Build and push the Docker image
 cd ../..  # repo root
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com
-docker build -t pixeltable-app .
-docker tag pixeltable-app:latest <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/pixeltable-app:latest
-docker push <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/pixeltable-app:latest
+docker build -t pixeltable-starter .
+docker tag pixeltable-starter:latest <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/pixeltable-starter:latest
+docker push <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/pixeltable-starter:latest
 
 # 2. Deploy infrastructure + app
 cd deploy/terraform-k8s
@@ -73,7 +73,7 @@ See [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuratio
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `region` | `us-west-2` | AWS region |
-| `cluster_name` | `pixeltable-app` | EKS cluster name |
+| `cluster_name` | `pixeltable-starter` | EKS cluster name |
 | `node_instance_type` | `m6i.xlarge` | Worker node size |
 | `node_count` | `2` | Number of worker nodes |
 

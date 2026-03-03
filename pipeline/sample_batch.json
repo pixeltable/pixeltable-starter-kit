@@ -1,0 +1,12 @@
+[
+  {
+    "title": "Custom Document 1",
+    "body": "This is a custom document loaded from a JSON batch file for testing the pipeline input modes.",
+    "source_id": "batch-001"
+  },
+  {
+    "title": "Custom Document 2",
+    "body": "Another document demonstrating how you would feed data from an SQS queue, Celery task, or S3 manifest into the pipeline.",
+    "source_id": "batch-002"
+  }
+]

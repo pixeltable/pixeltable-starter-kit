@@ -25,6 +25,9 @@ deploy/**/terraform.tfvars
 # CDK
 deploy/aws-cdk/cdk.out/
 
+# Pipeline output
+pipeline/serving.db
+
 # IDE
 .idea/
 .vscode/

@@ -1,8 +1,13 @@
-# Pixeltable App Template
+# Pixeltable Starter Kit
 
 [Pixeltable](https://github.com/pixeltable/pixeltable) is **data infrastructure for AI** — it replaces the patchwork of storage, ETL, vector DBs, feature stores, and orchestration frameworks with a single declarative system. Tables, computed columns, and embedding indexes handle what typically requires stitching together S3 + Postgres + Pinecone + Airflow + LangChain.
 
-This template is a **production-ready starter app** showing how to build on Pixeltable with FastAPI, Pydantic, and TypeScript. It demonstrates three core patterns through a simple three-tab UI:
+This repo contains two reference architectures that map to Pixeltable's [deployment strategies](https://docs.pixeltable.com/howto/deployment/overview):
+
+1. **Starter Kit** (this folder) — Pixeltable as **full backend**: a long-running FastAPI + React app.
+2. **[Orchestration Pipeline](pipeline/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest, `export_sql` to a serving DB, shut down.
+
+The starter kit demonstrates three core patterns through a simple three-tab UI:
 
 - **Data** — Upload documents, images, and videos. Pixeltable automatically chunks, extracts keyframes, transcribes audio, and generates thumbnails via computed columns and iterators.
 - **Search** — Cross-modal similarity search across all media types using embedding indexes.
@@ -17,8 +22,8 @@ These patterns extend to any use case — [ML data wrangling](https://docs.pixel
 **Prerequisites:** Python 3.10+, Node.js 18+, [uv](https://docs.astral.sh/uv/)
 
 ```bash
-git clone https://github.com/pixeltable/pixeltable-app-template.git
-cd pixeltable-app-template
+git clone https://github.com/pixeltable/pixeltable-starter-kit.git
+cd pixeltable-starter-kit
 cp .env.example .env   # add your ANTHROPIC_API_KEY and OPENAI_API_KEY
 
 # Backend
@@ -55,12 +60,12 @@ Pixeltable data persists across restarts via named Docker volumes. To reset ever
 
 ```bash
 # Build and push image to your registry
-docker build -t <your-registry>/pixeltable-app:latest .
-docker push <your-registry>/pixeltable-app:latest
+docker build -t <your-registry>/pixeltable-starter:latest .
+docker push <your-registry>/pixeltable-starter:latest
 
 # Deploy
-helm install pixeltable-app ./deploy/helm/pixeltable-app \
-  --set image.repository=<your-registry>/pixeltable-app \
+helm install pixeltable-starter ./deploy/helm/pixeltable-starter \
+  --set image.repository=<your-registry>/pixeltable-starter \
   --set secrets.OPENAI_API_KEY=sk-... \
   --set secrets.ANTHROPIC_API_KEY=sk-ant-...
 ```
@@ -69,13 +74,13 @@ helm install pixeltable-app ./deploy/helm/pixeltable-app \
 
 ```bash
 minikube start --cpus=4 --memory=6144
-docker build -t pixeltable-app:latest .
-minikube image load pixeltable-app:latest
-helm install pixeltable-app ./deploy/helm/pixeltable-app \
+docker build -t pixeltable-starter:latest .
+minikube image load pixeltable-starter:latest
+helm install pixeltable-starter ./deploy/helm/pixeltable-starter \
   --set image.pullPolicy=Never --set service.type=NodePort \
   --set secrets.OPENAI_API_KEY=$OPENAI_API_KEY \
   --set secrets.ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
-kubectl port-forward svc/pixeltable-app 9000:8000   # http://localhost:9000
+kubectl port-forward svc/pixeltable-starter 9000:8000   # http://localhost:9000
 ```
 
 See [`deploy/helm/README.md`](deploy/helm/README.md) for full configuration.
@@ -136,6 +141,12 @@ frontend/src/
 ├── components/             Page components + shared UI (Button, Badge)
 ├── lib/api.ts              Typed fetch wrapper
 └── types/index.ts          Shared interfaces
+
+pipeline/                       Orchestration-only deployment pattern
+├── pipeline.py                 Batch processing script (ingest → compute → export_sql)
+├── udfs.py                     Pixeltable UDFs
+├── Dockerfile                  Ephemeral container
+└── docker-compose.yml          Local testing
 
 deploy/
 ├── helm/                   Helm chart (any existing K8s cluster)

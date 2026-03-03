@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "pixeltable-app.fullname" . }}-data
+  name: {{ include "pixeltable-starter.fullname" . }}-data
   labels:
-    {{- include "pixeltable-app.labels" . | nindent 4 }}
+    {{- include "pixeltable-starter.labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode }}
