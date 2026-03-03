@@ -1,0 +1,9 @@
+location            = "eastus"
+cluster_name        = "pixeltable-app"
+resource_group_name = "pixeltable-app-rg"
+vm_size             = "Standard_D4s_v3"
+node_count          = 2
+
+# Sensitive — pass via TF_VAR_anthropic_api_key env var or -var flag
+# anthropic_api_key = ""
+# openai_api_key    = ""

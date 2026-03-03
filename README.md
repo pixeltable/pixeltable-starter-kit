@@ -36,10 +36,16 @@ npm install && npm run dev   # http://localhost:5173
 
 ```bash
 # Docker (simplest)
-docker compose up --build          # http://localhost:8000
+docker compose up --build              # http://localhost:8000
 
 # AWS EKS via Terraform
 cd deploy/terraform-k8s && terraform init && terraform apply
+
+# GCP GKE via Terraform
+cd deploy/terraform-gke && terraform init && terraform apply
+
+# Azure AKS via Terraform
+cd deploy/terraform-aks && terraform init && terraform apply
 
 # AWS ECS Fargate via CDK
 cd deploy/aws-cdk && cdk deploy
@@ -76,7 +82,9 @@ frontend/src/
 └── types/index.ts          Shared interfaces
 
 deploy/
-├── terraform-k8s/          Terraform + EKS (1-click K8s deployment)
+├── terraform-k8s/          Terraform + AWS EKS
+├── terraform-gke/          Terraform + GCP GKE
+├── terraform-aks/          Terraform + Azure AKS
 └── aws-cdk/                AWS CDK + ECS Fargate
 ```
 

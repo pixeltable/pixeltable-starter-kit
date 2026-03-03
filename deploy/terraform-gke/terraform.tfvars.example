@@ -1,0 +1,9 @@
+project_id   = "your-gcp-project-id"
+region       = "us-central1"
+cluster_name = "pixeltable-app"
+machine_type = "e2-standard-4"
+node_count   = 2
+
+# Sensitive — pass via TF_VAR_anthropic_api_key env var or -var flag
+# anthropic_api_key = ""
+# openai_api_key    = ""

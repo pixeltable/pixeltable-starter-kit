@@ -43,8 +43,10 @@ frontend/src/
 └── types/index.ts           TypeScript interfaces matching Pydantic models
 
 deploy/
-├── terraform-k8s/           Terraform + EKS (VPC, cluster, ECR, K8s manifests)
-└── aws-cdk/                 CDK + ECS Fargate (VPC, EFS, ALB, auto-scaling)
+├── terraform-k8s/           Terraform + AWS EKS
+├── terraform-gke/           Terraform + GCP GKE
+├── terraform-aks/           Terraform + Azure AKS
+└── aws-cdk/                 CDK + ECS Fargate
 ```
 
 ## Setup
@@ -114,8 +116,10 @@ TypeScript interfaces in `types/index.ts` mirror the backend Pydantic models. `l
 
 A multi-stage `Dockerfile` builds the frontend and Python runtime into a single image. `docker-compose.yml` runs it locally with named volumes for Pixeltable data. Two cloud deployment options live in `deploy/`:
 
-- **`deploy/terraform-k8s/`** — Terraform provisions an EKS cluster, ECR repo, and K8s resources (namespace, PVC, schema init job, deployment, LoadBalancer). Pixeltable data persists on a 50Gi EBS volume.
-- **`deploy/aws-cdk/`** — CDK deploys an ECS Fargate service behind an ALB with EFS for persistent storage. Auto-scales 1–4 tasks.
+- **`deploy/terraform-k8s/`** — AWS EKS cluster, ECR repo, K8s resources (PVC, schema init job, deployment, LoadBalancer). Pixeltable data on 50Gi EBS.
+- **`deploy/terraform-gke/`** — GCP GKE cluster, Artifact Registry, same K8s pattern. Pixeltable data on 50Gi Persistent Disk.
+- **`deploy/terraform-aks/`** — Azure AKS cluster, ACR, same K8s pattern. Pixeltable data on 50Gi Managed Disk.
+- **`deploy/aws-cdk/`** — ECS Fargate behind ALB with EFS for persistent storage. Auto-scales 1–4 tasks.
 
 Both configure `PIXELTABLE_HOME=/data/pixeltable` pointing to persistent storage. For large media workloads, set `PIXELTABLE_INPUT_MEDIA_DEST` and `PIXELTABLE_OUTPUT_MEDIA_DEST` to S3 URIs (see [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md)).
 

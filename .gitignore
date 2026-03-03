@@ -17,10 +17,10 @@ dist/
 backend/static/
 
 # Terraform
-deploy/terraform-k8s/.terraform/
-deploy/terraform-k8s/*.tfstate*
-deploy/terraform-k8s/.terraform.lock.hcl
-deploy/terraform-k8s/terraform.tfvars
+deploy/**/.terraform/
+deploy/**/*.tfstate*
+deploy/**/.terraform.lock.hcl
+deploy/**/terraform.tfvars
 
 # CDK
 deploy/aws-cdk/cdk.out/
