@@ -36,21 +36,25 @@ npm install && npm run dev   # http://localhost:5173
 
 ### Docker Compose (local / single server)
 
+**Requires [Docker](https://docs.docker.com/get-docker/)** (Docker Desktop on macOS/Windows, or Docker Engine on Linux).
+
 ```bash
-cp .env.example .env   # add API keys
-docker compose up --build   # http://localhost:8000
+cp .env.example .env          # add API keys
+docker compose up --build     # http://localhost:8000
 ```
 
-Pixeltable data persists across restarts via named Docker volumes.
+Pixeltable data persists across restarts via named Docker volumes. To reset everything: `docker compose down -v`.
 
 ### Helm (any existing Kubernetes cluster)
 
-If you already have a K8s cluster (EKS, GKE, AKS, k3s, etc.), Helm is the simplest path:
+**Requires [Helm 3](https://helm.sh/docs/intro/install/)** and a running K8s cluster (EKS, GKE, AKS, k3s, etc.).
 
 ```bash
+# Build and push image to your registry
 docker build -t <your-registry>/pixeltable-app:latest .
 docker push <your-registry>/pixeltable-app:latest
 
+# Deploy
 helm install pixeltable-app ./deploy/helm/pixeltable-app \
   --set image.repository=<your-registry>/pixeltable-app \
   --set secrets.OPENAI_API_KEY=sk-... \
@@ -59,9 +63,9 @@ helm install pixeltable-app ./deploy/helm/pixeltable-app \
 
 See [`deploy/helm/README.md`](deploy/helm/README.md) for full configuration.
 
-### Terraform (provision cluster + deploy)
+### Terraform (provision cluster from scratch)
 
-These configs provision the full cloud infrastructure — VPC, K8s cluster, container registry, and all K8s resources — from scratch:
+**Requires [Terraform](https://developer.hashicorp.com/terraform/install)** and cloud credentials. These configs provision everything — VPC, managed K8s cluster, container registry, and all K8s resources:
 
 ```bash
 # AWS EKS
@@ -74,11 +78,11 @@ cd deploy/terraform-gke && terraform init && terraform apply
 cd deploy/terraform-aks && terraform init && terraform apply
 ```
 
-Each creates a managed K8s cluster with a 50Gi persistent volume for Pixeltable data.
+Each creates a managed K8s cluster with a 50Gi persistent volume for Pixeltable data. See each `deploy/terraform-*/README.md` for required variables.
 
 ### AWS CDK (ECS Fargate)
 
-Serverless containers on AWS with EFS for persistent storage and an ALB for load balancing:
+**Requires [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting-started.html)** and configured AWS credentials. Serverless containers with EFS for persistent storage and an ALB for load balancing:
 
 ```bash
 cd deploy/aws-cdk && pip install -r requirements.txt && cdk deploy
