@@ -1,10 +1,14 @@
 # Pixeltable App Template
 
-A skeleton app showing how [Pixeltable](https://github.com/pixeltable/pixeltable) unifies **storage, orchestration, and retrieval** for multimodal workloads. Pixeltable is data infrastructure — you can build whatever you want on top of it. This template just demonstrates the core pattern with a simple three-tab UI:
+[Pixeltable](https://github.com/pixeltable/pixeltable) is **data infrastructure for AI** — it replaces the patchwork of storage, ETL, vector DBs, feature stores, and orchestration frameworks with a single declarative system. Tables, computed columns, and embedding indexes handle what typically requires stitching together S3 + Postgres + Pinecone + Airflow + LangChain.
+
+This template is a **production-ready starter app** showing how to build on Pixeltable with FastAPI, Pydantic, and TypeScript. It demonstrates three core patterns through a simple three-tab UI:
 
 - **Data** — Upload documents, images, and videos. Pixeltable automatically chunks, extracts keyframes, transcribes audio, and generates thumbnails via computed columns and iterators.
 - **Search** — Cross-modal similarity search across all media types using embedding indexes.
 - **Agent** — Chat with a tool-calling agent (Claude) wired up entirely as Pixeltable computed columns.
+
+These patterns extend to any use case — [ML data wrangling](https://docs.pixeltable.com/use-cases/ml-data-wrangling), [RAG applications](https://docs.pixeltable.com/use-cases/ai-applications), [agentic workflows](https://docs.pixeltable.com/use-cases/agents-mcp), and more. If you're migrating from an existing stack, see how Pixeltable maps to [DIY data pipelines](https://docs.pixeltable.com/migrate/from-diy-data-pipeline), [RDBMS + vector DBs](https://docs.pixeltable.com/migrate/from-rdbms-vectordbs), or [agent frameworks](https://docs.pixeltable.com/migrate/from-agent-frameworks).
 
 > For a more complete example, see **[Pixelbot](https://github.com/pixeltable/pixelbot)**.
 
@@ -144,6 +148,10 @@ deploy/
 ## Learn More
 
 [Pixeltable Docs](https://docs.pixeltable.com/) · [GitHub](https://github.com/pixeltable/pixeltable) · [Cookbooks](https://docs.pixeltable.com/howto/cookbooks) · [AGENTS.md](AGENTS.md)
+
+**Use cases:** [ML Data Wrangling](https://docs.pixeltable.com/use-cases/ml-data-wrangling) · [Backend for AI Apps](https://docs.pixeltable.com/use-cases/ai-applications) · [Agents & MCP](https://docs.pixeltable.com/use-cases/agents-mcp)
+
+**Migrating from:** [DIY Pipelines](https://docs.pixeltable.com/migrate/from-diy-data-pipeline) · [RDBMS & Vector DBs](https://docs.pixeltable.com/migrate/from-rdbms-vectordbs) · [Agent Frameworks](https://docs.pixeltable.com/migrate/from-agent-frameworks)
 
 ## License
 
