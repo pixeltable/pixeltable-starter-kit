@@ -1755,6 +1755,7 @@ name = "pixeltable-pipeline"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pillow" },
     { name = "pixeltable" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy" },
@@ -1768,6 +1769,7 @@ openai = [
 [package.metadata]
 requires-dist = [
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
+    { name = "pillow", specifier = ">=10.0" },
     { name = "pixeltable", specifier = ">=0.5.19" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1" },
     { name = "sqlalchemy", specifier = ">=2.0" },
