@@ -19,11 +19,11 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Install Python deps (cached layer)
+# Pin the venv to the absolute Python path so symlinks survive at runtime
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --python /usr/local/bin/python3
 
-# Install spacy model (uv doesn't provide pip, so use uv pip directly)
+# Install spacy model directly into the venv
 RUN uv pip install --python .venv/bin/python \
     en-core-web-sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 
@@ -31,12 +31,10 @@ RUN uv pip install --python .venv/bin/python \
 COPY backend/ ./
 COPY --from=frontend-build /app/backend/static ./static
 
-# Pixeltable data lives here — mount a volume in production
+# Tell uv where the venv lives so `uv run` never recreates it
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 ENV PIXELTABLE_HOME=/data/pixeltable
 
 EXPOSE 8000
 
-# Schema init + server start.
-# In production, run setup_pixeltable.py once (or as an init container),
-# then start the server.
 CMD ["sh", "-c", "uv run python setup_pixeltable.py && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]

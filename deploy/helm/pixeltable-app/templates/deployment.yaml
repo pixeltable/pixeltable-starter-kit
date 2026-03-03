@@ -20,7 +20,11 @@ spec:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.schemaInit.enabled }}
+          command: ["sh", "-c", "uv run python setup_pixeltable.py && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]
+          {{- else }}
           command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+          {{- end }}
           ports:
             - containerPort: 8000
               protocol: TCP
@@ -38,13 +42,13 @@ spec:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 30
           volumeMounts:
             {{- if .Values.persistence.enabled }}

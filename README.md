@@ -61,6 +61,19 @@ helm install pixeltable-app ./deploy/helm/pixeltable-app \
   --set secrets.ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+**Local testing with [minikube](https://minikube.sigs.k8s.io/docs/start/):**
+
+```bash
+minikube start --cpus=4 --memory=6144
+docker build -t pixeltable-app:latest .
+minikube image load pixeltable-app:latest
+helm install pixeltable-app ./deploy/helm/pixeltable-app \
+  --set image.pullPolicy=Never --set service.type=NodePort \
+  --set secrets.OPENAI_API_KEY=$OPENAI_API_KEY \
+  --set secrets.ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
+kubectl port-forward svc/pixeltable-app 9000:8000   # http://localhost:9000
+```
+
 See [`deploy/helm/README.md`](deploy/helm/README.md) for full configuration.
 
 ### Terraform (provision cluster from scratch)
