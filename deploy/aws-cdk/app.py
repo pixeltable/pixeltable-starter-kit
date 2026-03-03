@@ -79,7 +79,7 @@ class PixeltableAppStack(Stack):
 
         # ── ECS Cluster ──────────────────────────────────────────────────
         cluster = ecs.Cluster(
-            self, "Cluster", vpc=vpc, container_insights=True
+            self, "Cluster", vpc=vpc, container_insights_v2=ecs.ContainerInsights.ENABLED
         )
 
         # ── Docker image (built from repo root) ─────────────────────────
