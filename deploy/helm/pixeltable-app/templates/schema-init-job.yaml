@@ -1,0 +1,44 @@
+{{- if .Values.schemaInit.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "pixeltable-app.fullname" . }}-schema-init
+  labels:
+    {{- include "pixeltable-app.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "pixeltable-app.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: schema-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["uv", "run", "python", "setup_pixeltable.py"]
+          envFrom:
+            - secretRef:
+                name: {{ include "pixeltable-app.fullname" . }}
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: /data/pixeltable
+            {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "pixeltable-app.fullname" . }}-data
+        {{- end }}
+{{- end }}

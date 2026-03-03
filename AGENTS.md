@@ -43,6 +43,7 @@ frontend/src/
 └── types/index.ts           TypeScript interfaces matching Pydantic models
 
 deploy/
+├── helm/                    Helm chart (any existing K8s cluster)
 ├── terraform-k8s/           Terraform + AWS EKS
 ├── terraform-gke/           Terraform + GCP GKE
 ├── terraform-aks/           Terraform + Azure AKS
@@ -114,14 +115,15 @@ TypeScript interfaces in `types/index.ts` mirror the backend Pydantic models. `l
 
 ### Containerized deployment
 
-A multi-stage `Dockerfile` builds the frontend and Python runtime into a single image. `docker-compose.yml` runs it locally with named volumes for Pixeltable data. Two cloud deployment options live in `deploy/`:
+A multi-stage `Dockerfile` builds the frontend and Python runtime into a single image. `docker-compose.yml` runs it locally with named volumes for Pixeltable data. Deployment options live in `deploy/`:
 
-- **`deploy/terraform-k8s/`** — AWS EKS cluster, ECR repo, K8s resources (PVC, schema init job, deployment, LoadBalancer). Pixeltable data on 50Gi EBS.
-- **`deploy/terraform-gke/`** — GCP GKE cluster, Artifact Registry, same K8s pattern. Pixeltable data on 50Gi Persistent Disk.
-- **`deploy/terraform-aks/`** — Azure AKS cluster, ACR, same K8s pattern. Pixeltable data on 50Gi Managed Disk.
+- **`deploy/helm/`** — Helm chart for deploying on **any existing K8s cluster**. Creates Secret, PVC, schema init Job (Helm hook), Deployment with health checks, and LoadBalancer Service. No infra provisioning — just `helm install`.
+- **`deploy/terraform-k8s/`** — Provisions full AWS stack from scratch: VPC, EKS cluster, ECR, plus K8s resources. Pixeltable data on 50Gi EBS.
+- **`deploy/terraform-gke/`** — Same pattern for GCP: VPC, GKE cluster, Artifact Registry. 50Gi Persistent Disk.
+- **`deploy/terraform-aks/`** — Same pattern for Azure: Resource Group, AKS cluster, ACR. 50Gi Managed Disk.
 - **`deploy/aws-cdk/`** — ECS Fargate behind ALB with EFS for persistent storage. Auto-scales 1–4 tasks.
 
-Both configure `PIXELTABLE_HOME=/data/pixeltable` pointing to persistent storage. For large media workloads, set `PIXELTABLE_INPUT_MEDIA_DEST` and `PIXELTABLE_OUTPUT_MEDIA_DEST` to S3 URIs (see [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md)).
+All configure `PIXELTABLE_HOME=/data/pixeltable` pointing to persistent storage. For large media workloads, set `PIXELTABLE_INPUT_MEDIA_DEST` and `PIXELTABLE_OUTPUT_MEDIA_DEST` to S3/GCS/Azure Blob URIs (see [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md)).
 
 ### SPA fallback
 

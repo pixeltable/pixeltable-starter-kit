@@ -34,31 +34,66 @@ npm install && npm run dev   # http://localhost:5173
 
 ## Deploy
 
+### Docker Compose (local / single server)
+
 ```bash
-# Docker (simplest)
-docker compose up --build              # http://localhost:8000
-
-# AWS EKS via Terraform
-cd deploy/terraform-k8s && terraform init && terraform apply
-
-# GCP GKE via Terraform
-cd deploy/terraform-gke && terraform init && terraform apply
-
-# Azure AKS via Terraform
-cd deploy/terraform-aks && terraform init && terraform apply
-
-# AWS ECS Fargate via CDK
-cd deploy/aws-cdk && cdk deploy
+cp .env.example .env   # add API keys
+docker compose up --build   # http://localhost:8000
 ```
 
-Each option handles Pixeltable's persistent storage (embedded PostgreSQL + file cache) via volumes. For large media files, configure external blob storage:
+Pixeltable data persists across restarts via named Docker volumes.
+
+### Helm (any existing Kubernetes cluster)
+
+If you already have a K8s cluster (EKS, GKE, AKS, k3s, etc.), Helm is the simplest path:
 
 ```bash
-PIXELTABLE_INPUT_MEDIA_DEST=s3://your-bucket/input
+docker build -t <your-registry>/pixeltable-app:latest .
+docker push <your-registry>/pixeltable-app:latest
+
+helm install pixeltable-app ./deploy/helm/pixeltable-app \
+  --set image.repository=<your-registry>/pixeltable-app \
+  --set secrets.OPENAI_API_KEY=sk-... \
+  --set secrets.ANTHROPIC_API_KEY=sk-ant-...
+```
+
+See [`deploy/helm/README.md`](deploy/helm/README.md) for full configuration.
+
+### Terraform (provision cluster + deploy)
+
+These configs provision the full cloud infrastructure — VPC, K8s cluster, container registry, and all K8s resources — from scratch:
+
+```bash
+# AWS EKS
+cd deploy/terraform-k8s && terraform init && terraform apply
+
+# GCP GKE
+cd deploy/terraform-gke && terraform init && terraform apply
+
+# Azure AKS
+cd deploy/terraform-aks && terraform init && terraform apply
+```
+
+Each creates a managed K8s cluster with a 50Gi persistent volume for Pixeltable data.
+
+### AWS CDK (ECS Fargate)
+
+Serverless containers on AWS with EFS for persistent storage and an ALB for load balancing:
+
+```bash
+cd deploy/aws-cdk && pip install -r requirements.txt && cdk deploy
+```
+
+### Storage notes
+
+All deployment options configure `PIXELTABLE_HOME=/data/pixeltable` pointing to persistent storage (Docker volumes, K8s PVCs, or EFS). For large media workloads, configure external blob storage:
+
+```bash
+PIXELTABLE_INPUT_MEDIA_DEST=s3://your-bucket/input    # or gs:// or az://
 PIXELTABLE_OUTPUT_MEDIA_DEST=s3://your-bucket/output
 ```
 
-See [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md) and `deploy/` READMEs for details.
+See [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuration.md) and each `deploy/` README for details.
 
 ## Project Structure
 
@@ -82,6 +117,7 @@ frontend/src/
 └── types/index.ts          Shared interfaces
 
 deploy/
+├── helm/                   Helm chart (any existing K8s cluster)
 ├── terraform-k8s/          Terraform + AWS EKS
 ├── terraform-gke/          Terraform + GCP GKE
 ├── terraform-aks/          Terraform + Azure AKS

@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: pixeltable-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 8000
+
+resources:
+  requests:
+    cpu: "1"
+    memory: 4Gi
+  limits:
+    cpu: "4"
+    memory: 8Gi
+
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: ""
+  accessMode: ReadWriteOnce
+
+env:
+  PIXELTABLE_HOME: /data/pixeltable
+  CORS_ORIGINS: "*"
+
+secrets:
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+
+schemaInit:
+  enabled: true
