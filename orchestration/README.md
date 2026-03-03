@@ -1,8 +1,8 @@
-# Pixeltable Orchestration Pipeline
+# Pixeltable Ephemeral Orchestration
 
 Use Pixeltable as an **ephemeral processing engine**: spin up a container, ingest text and media, let computed columns do the work, export structured results to a serving database via [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql), and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/v0.5.9/table) parameter. No persistent infrastructure — the container shuts down when done.
 
-This is the complement to the [starter kit](../README.md) (long-running server). Here Pixeltable is a batch pipeline — it processes data and hands off to your existing serving layer.
+This is the complement to the [starter kit](../README.md) (long-running server). Here Pixeltable is an ephemeral processing engine — it processes data and hands off to your existing serving layer.
 
 ```
 SQS / Cron / Webhook
@@ -22,7 +22,7 @@ SQS / Cron / Webhook
 ## Quick Start
 
 ```bash
-cd pipeline
+cd orchestration
 uv sync
 PIXELTABLE_HOME=/tmp/pxt uv run python pipeline.py
 ```
@@ -170,7 +170,7 @@ Queue (SQS/Redis) → KEDA ScaledJob → K8s Job (Spot nodes)
 ## Files
 
 ```
-pipeline/
+orchestration/
 ├── pipeline.py          Main processing script
 ├── udfs.py              Pixeltable UDFs (word_count, char_count, preview, thumbnail)
 ├── sample_batch.json    Example JSON input

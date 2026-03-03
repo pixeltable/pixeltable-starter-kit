@@ -42,7 +42,7 @@ frontend/src/
 ├── lib/api.ts               Typed fetch wrapper mirroring backend response models
 └── types/index.ts           TypeScript interfaces matching Pydantic models
 
-pipeline/                        Orchestration-only deployment pattern
+orchestration/                   Ephemeral orchestration deployment pattern
 ├── pipeline.py                  Batch processing (ingest → compute → export_sql)
 ├── udfs.py                      Pixeltable UDFs
 ├── Dockerfile                   Ephemeral container

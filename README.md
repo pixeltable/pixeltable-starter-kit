@@ -5,7 +5,7 @@
 This repo contains two reference architectures that map to Pixeltable's [deployment strategies](https://docs.pixeltable.com/howto/deployment/overview):
 
 1. **Starter Kit** (this folder) — Pixeltable as **full backend**: a long-running FastAPI + React app with persistent storage.
-2. **[Orchestration Pipeline](pipeline/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest text and media, let computed columns process everything, [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql) structured results to a serving DB, and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/v0.5.9/table) parameter on `add_computed_column`. No persistent infrastructure — the container shuts down when done.
+2. **[Ephemeral Orchestration](orchestration/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest text and media, let computed columns process everything, [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql) structured results to a serving DB, and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/v0.5.9/table) parameter on `add_computed_column`. No persistent infrastructure — the container shuts down when done.
 
 The starter kit demonstrates three core patterns through a simple three-tab UI:
 
@@ -142,7 +142,7 @@ frontend/src/
 ├── lib/api.ts              Typed fetch wrapper
 └── types/index.ts          Shared interfaces
 
-pipeline/                       Orchestration-only deployment pattern
+orchestration/                  Ephemeral orchestration deployment pattern
 ├── pipeline.py                 Batch processing script (ingest → compute → export_sql)
 ├── udfs.py                     Pixeltable UDFs
 ├── Dockerfile                  Ephemeral container
