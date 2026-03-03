@@ -19,13 +19,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
+# Install Python deps (cached layer)
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev
 
+# Install spacy model (uv doesn't provide pip, so use uv pip directly)
+RUN uv pip install --python .venv/bin/python \
+    en-core-web-sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+
+# Copy app code + built frontend
 COPY backend/ ./
 COPY --from=frontend-build /app/backend/static ./static
-
-RUN uv run python -m spacy download en_core_web_sm
 
 # Pixeltable data lives here — mount a volume in production
 ENV PIXELTABLE_HOME=/data/pixeltable
