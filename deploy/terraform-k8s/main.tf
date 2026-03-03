@@ -77,7 +77,7 @@ module "eks" {
 
 resource "aws_ecr_repository" "app" {
   name                 = var.ecr_repository_name
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
@@ -169,9 +169,25 @@ resource "kubernetes_deployment" "app" {
       }
 
       spec {
+        automount_service_account_token = false
+
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 1000
+          run_as_group    = 1000
+          fs_group        = 1000
+        }
+
         container {
           name  = "app"
           image = "${aws_ecr_repository.app.repository_url}:latest"
+
+          security_context {
+            allow_privilege_escalation = false
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
 
           # Schema init + server in same container (Pixeltable's embedded
           # Postgres must stay alive — separate Jobs leave stale PID files)

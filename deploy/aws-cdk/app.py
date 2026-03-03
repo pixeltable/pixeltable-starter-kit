@@ -66,6 +66,7 @@ class PixeltableAppStack(Stack):
             "PixeltableData",
             vpc=vpc,
             removal_policy=RemovalPolicy.RETAIN,
+            encrypted=True,
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.ELASTIC,
         )

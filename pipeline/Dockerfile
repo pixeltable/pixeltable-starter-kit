@@ -13,7 +13,11 @@ ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 
 COPY pipeline.py udfs.py ./
 
-# Ephemeral: PIXELTABLE_HOME lives inside the container (tmpfs in prod)
+RUN addgroup --system --gid 1000 appgroup && \
+    adduser --system --uid 1000 --ingroup appgroup appuser && \
+    mkdir -p /tmp/pixeltable && chown -R appuser:appgroup /tmp/pixeltable
+
+USER appuser
 ENV PIXELTABLE_HOME=/tmp/pixeltable
 
 ENTRYPOINT ["uv", "run", "python", "pipeline.py"]

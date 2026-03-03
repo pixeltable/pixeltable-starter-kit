@@ -35,6 +35,11 @@ COPY --from=frontend-build /app/backend/static ./static
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 ENV PIXELTABLE_HOME=/data/pixeltable
 
+RUN addgroup --system --gid 1000 appgroup && \
+    adduser --system --uid 1000 --ingroup appgroup appuser && \
+    mkdir -p /data/pixeltable && chown -R appuser:appgroup /data/pixeltable
+
+USER appuser
 EXPOSE 8000
 
 CMD ["sh", "-c", "uv run python setup_pixeltable.py && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]

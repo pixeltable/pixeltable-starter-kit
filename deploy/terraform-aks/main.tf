@@ -31,7 +31,7 @@ resource "azurerm_container_registry" "acr" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
-  admin_enabled       = true
+  admin_enabled       = false
 }
 
 # ── AKS Cluster ──────────────────────────────────────────────────────────────
@@ -149,9 +149,25 @@ resource "kubernetes_deployment" "app" {
       }
 
       spec {
+        automount_service_account_token = false
+
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 1000
+          run_as_group    = 1000
+          fs_group        = 1000
+        }
+
         container {
           name  = "app"
           image = local.image_url
+
+          security_context {
+            allow_privilege_escalation = false
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
 
           # Schema init + server in same container (Pixeltable's embedded
           # Postgres must stay alive — separate Jobs leave stale PID files)

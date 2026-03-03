@@ -42,7 +42,23 @@ resource "google_compute_subnetwork" "subnet" {
   }
 }
 
-# ── GKE Cluster ──────────────────────────────────────────────────────────────
+# ── Cloud NAT (outbound internet for private nodes) ─────────────────────────
+
+resource "google_compute_router" "router" {
+  name    = "${var.cluster_name}-router"
+  region  = var.region
+  network = google_compute_network.vpc.id
+}
+
+resource "google_compute_router_nat" "nat" {
+  name                               = "${var.cluster_name}-nat"
+  router                             = google_compute_router.router.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+}
+
+# ── GKE Cluster (private nodes, public control plane) ───────────────────────
 
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
@@ -51,13 +67,18 @@ resource "google_container_cluster" "primary" {
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.subnet.id
 
-  # Use separately managed node pool
   remove_default_node_pool = true
   initial_node_count       = 1
 
   ip_allocation_policy {
     cluster_secondary_range_name  = "pods"
     services_secondary_range_name = "services"
+  }
+
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false
+    master_ipv4_cidr_block  = "172.16.0.0/28"
   }
 
   deletion_protection = false
@@ -82,6 +103,15 @@ resource "google_container_node_pool" "primary" {
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
+
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
+    shielded_instance_config {
+      enable_secure_boot          = true
+      enable_integrity_monitoring = true
+    }
   }
 }
 
@@ -179,9 +209,25 @@ resource "kubernetes_deployment" "app" {
       }
 
       spec {
+        automount_service_account_token = false
+
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 1000
+          run_as_group    = 1000
+          fs_group        = 1000
+        }
+
         container {
           name  = "app"
           image = local.image_url
+
+          security_context {
+            allow_privilege_escalation = false
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
 
           # Schema init + server in same container (Pixeltable's embedded
           # Postgres must stay alive — separate Jobs leave stale PID files)
