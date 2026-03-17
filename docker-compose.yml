@@ -1,3 +1,4 @@
+# Pixeltable Starter Kit — local development
 services:
   app:
     build: .
