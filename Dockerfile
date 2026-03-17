@@ -1,3 +1,4 @@
+# Pixeltable Starter Kit — multi-stage container build
 # ── Stage 1: Build frontend ──────────────────────────────────────────────────
 FROM node:20-slim AS frontend-build
 
