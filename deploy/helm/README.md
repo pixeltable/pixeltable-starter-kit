@@ -1,6 +1,6 @@
 # Helm Chart — Pixeltable Starter Kit
 
-Deploy the Pixeltable app on **any existing Kubernetes cluster** using Helm.
+Deploy the Pixeltable Starter Kit on **any existing Kubernetes cluster** using Helm.
 
 Unlike the Terraform configs (which provision the cluster from scratch), this chart assumes you already have a K8s cluster and just want to deploy the app.
 
