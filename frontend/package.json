@@ -1,5 +1,6 @@
 {
   "name": "pixeltable-starter-kit",
+  "description": "Pixeltable Starter Kit — React frontend for multimodal AI",
   "private": true,
   "version": "1.0.0",
   "type": "module",
