@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.local
 
 # Pixeltable local data (backend upload folder)
 /backend/data/
