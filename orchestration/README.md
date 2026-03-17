@@ -171,7 +171,7 @@ Queue (SQS/Redis) → KEDA ScaledJob → K8s Job (Spot nodes)
 
 ```
 orchestration/
-├── pipeline.py          Main processing script
+├── pipeline.py          Batch processing script
 ├── udfs.py              Pixeltable UDFs (word_count, char_count, preview, thumbnail)
 ├── sample_batch.json    Example JSON input
 ├── pyproject.toml       Dependencies
