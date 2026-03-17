@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents working with this starter kit.
+Instructions for AI coding agents working with the Pixeltable Starter Kit.
 
 ## Pixeltable Resources
 
