@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pixeltable Starter Kit",
-    description="Full-stack starter app powered by Pixeltable",
+    description="Full-stack multimodal AI starter app powered by Pixeltable",
     version="1.0.0",
     lifespan=lifespan,
 )
