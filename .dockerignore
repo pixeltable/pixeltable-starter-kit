@@ -1,3 +1,4 @@
+# Exclude from Docker build context
 __pycache__/
 *.py[cod]
 **/.venv/
