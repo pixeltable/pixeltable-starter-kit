@@ -3,42 +3,29 @@
 [Pixeltable](https://github.com/pixeltable/pixeltable) is **open-source data infrastructure for AI** — it replaces the patchwork of blob storage, metadata DBs, vector stores, media processing, orchestration, and glue code with a single declarative system. Tables, computed columns, and embedding indexes handle what typically requires stitching together S3, Postgres, Pinecone, FFmpeg, HuggingFace, Airflow, LangChain, and custom scripts to wire them all together.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#0f172a', 'primaryBorderColor': '#334155', 'lineColor': '#475569', 'secondaryColor': '#f8fafc', 'tertiaryColor': '#f1f5f9', 'clusterBkg': '#f8fafc', 'clusterBorder': '#94a3b8', 'fontSize': '14px'}}}%%
 graph TD
-    subgraph Frontend["React + TypeScript"]
-        D["Data — upload docs, images, videos"]
-        S["Search — cross-modal similarity"]
-        A["Agent — AI chat with tools"]
+    subgraph Frontend["Frontend · React + TypeScript"]
+        D["<b>Data</b><br/>upload docs, images, videos"]
+        S["<b>Search</b><br/>cross-modal similarity"]
+        A["<b>Agent</b><br/>AI chat with tools"]
     end
 
-    API["FastAPI"]
+    API["<b>FastAPI</b>"]
 
-    subgraph PXT["Pixeltable — storage, orchestration, and retrieval"]
-        Tables["Tables · documents · images · videos · chat · agent"]
-        Views["Views & Iterators · chunks · keyframes · transcripts"]
-        CC["Computed Columns · thumbnails · transcription · embeddings"]
-        EI["Embedding Indexes · sentence-transformers + CLIP"]
-        AP["Agent Pipeline · 8 chained columns: tools → RAG → answer"]
+    subgraph PXT["Pixeltable — storage · orchestration · retrieval"]
+        Tables["<b>Tables</b><br/>documents · images · videos · chat · agent"]
+        Views["<b>Views & Iterators</b><br/>chunks · keyframes · transcripts"]
+        CC["<b>Computed Columns</b> · @pxt.udf<br/>thumbnails · transcription · embeddings"]
+        EI["<b>Embedding Indexes</b> · @pxt.query<br/>sentence-transformers · CLIP"]
+        AP["<b>Agent Pipeline</b><br/>8 chained columns<br/>tools → RAG → answer"]
     end
 
     D & S & A --> API
     API --> Tables
     Tables --> Views --> CC --> EI
     Tables --> AP
-    AP -.->|similarity search| EI
-
-    classDef blue fill:#dbeafe,stroke:#2563eb,color:#1e40af
-    classDef amber fill:#fef3c7,stroke:#d97706,color:#92400e
-    classDef indigo fill:#e0e7ff,stroke:#4f46e5,color:#312e81
-    classDef violet fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
-    classDef teal fill:#ccfbf1,stroke:#0d9488,color:#134e4a
-    classDef pink fill:#fce7f3,stroke:#db2777,color:#831843
-
-    class D,S,A blue
-    class API amber
-    class Tables indigo
-    class Views,CC violet
-    class EI teal
-    class AP pink
+    AP -.->|"@pxt.query"| EI
 ```
 
 This repo contains two reference architectures that map to Pixeltable's [deployment strategies](https://docs.pixeltable.com/howto/deployment/overview):
