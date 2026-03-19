@@ -2,6 +2,31 @@
 
 [Pixeltable](https://github.com/pixeltable/pixeltable) is **open-source data infrastructure for AI** — it replaces the patchwork of blob storage, metadata DBs, vector stores, media processing, orchestration, and glue code with a single declarative system. Tables, computed columns, and embedding indexes handle what typically requires stitching together S3, Postgres, Pinecone, FFmpeg, HuggingFace, Airflow, LangChain, and custom scripts to wire them all together.
 
+```mermaid
+graph TD
+    subgraph Frontend["React + TypeScript"]
+        D["Data — upload docs, images, videos"]
+        S["Search — cross-modal similarity"]
+        A["Agent — AI chat with tools"]
+    end
+
+    API["FastAPI"]
+
+    subgraph PXT["Pixeltable — storage, orchestration, and retrieval"]
+        Tables["Tables · documents · images · videos · chat · agent"]
+        Views["Views & Iterators · chunks · keyframes · transcripts"]
+        CC["Computed Columns · thumbnails · transcription · embeddings"]
+        EI["Embedding Indexes · sentence-transformers + CLIP"]
+        AP["Agent Pipeline · 8 chained columns: tools → RAG → answer"]
+    end
+
+    D & S & A --> API
+    API --> Tables
+    Tables --> Views --> CC --> EI
+    Tables --> AP
+    AP -.->|similarity search| EI
+```
+
 This repo contains two reference architectures that map to Pixeltable's [deployment strategies](https://docs.pixeltable.com/howto/deployment/overview):
 
 1. **Starter Kit** (this folder) — Pixeltable as **full backend**: a long-running FastAPI + React app with persistent storage.
