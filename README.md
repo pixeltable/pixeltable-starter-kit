@@ -25,6 +25,20 @@ graph TD
     Tables --> Views --> CC --> EI
     Tables --> AP
     AP -.->|similarity search| EI
+
+    classDef blue fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    classDef amber fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef indigo fill:#e0e7ff,stroke:#4f46e5,color:#312e81
+    classDef violet fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef teal fill:#ccfbf1,stroke:#0d9488,color:#134e4a
+    classDef pink fill:#fce7f3,stroke:#db2777,color:#831843
+
+    class D,S,A blue
+    class API amber
+    class Tables indigo
+    class Views,CC violet
+    class EI teal
+    class AP pink
 ```
 
 This repo contains two reference architectures that map to Pixeltable's [deployment strategies](https://docs.pixeltable.com/howto/deployment/overview):
