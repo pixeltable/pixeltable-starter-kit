@@ -33,6 +33,25 @@ This repo contains two reference architectures that map to Pixeltable's [deploym
 1. **Starter Kit** (this folder) — Pixeltable as **full backend**: a long-running FastAPI + React app with persistent storage.
 2. **[Ephemeral Orchestration](orchestration/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest text and media, let computed columns process everything, [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql) structured results to a serving DB, and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/v0.5.9/table) parameter on `add_computed_column`. No persistent infrastructure — the container shuts down when done.
 
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#0f172a', 'primaryBorderColor': '#334155', 'lineColor': '#475569', 'secondaryColor': '#f8fafc', 'tertiaryColor': '#f1f5f9', 'clusterBkg': '#f8fafc', 'clusterBorder': '#94a3b8', 'fontSize': '14px'}}}%%
+graph TD
+    Trigger["<b>SQS · Cron · Webhook</b>"]
+
+    subgraph Container["Ephemeral Container · Pixeltable"]
+        Schema["<b>Create Schema</b><br/>tables + computed columns"]
+        Ingest["<b>Ingest</b><br/>text + media from queue, RDBMS, or S3"]
+        Process["<b>Computed Columns</b> + @pxt.udf<br/>thumbnails · transcription · embeddings"]
+    end
+
+    SQL["<b>Serving DB</b> · export_sql<br/>Postgres · MySQL · Snowflake"]
+    Bucket["<b>Cloud Bucket</b> · destination<br/>S3 · GCS · Azure Blob"]
+
+    Trigger --> Schema --> Ingest --> Process
+    Process -->|"structured data"| SQL
+    Process -->|"generated media"| Bucket
+```
+
 The starter kit demonstrates three core patterns through a simple three-tab UI:
 
 - **Data** — Upload documents, images, and videos. Pixeltable automatically chunks, extracts keyframes, transcribes audio, and generates thumbnails via computed columns and iterators.
