@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import {
   Send, Loader2, Bot, User, Plus, Clock, Trash2,
   FileText, ImageIcon, Wrench,
@@ -7,6 +8,7 @@ import { marked } from 'marked'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import * as api from '@/lib/api'
+import { useMountEffect } from '@/lib/hooks'
 import type { ChatMessage, Conversation, QueryMetadata } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -24,23 +26,22 @@ export function AgentPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  useEffect(() => { scrollToBottom() }, [messages])
-
-  const loadConversations = useCallback(async () => {
+  const loadConversations = async () => {
     try {
       const data = await api.getConversations()
       setConversations(data)
     } catch { /* empty */ }
-  }, [])
+  }
 
-  useEffect(() => { loadConversations() }, [loadConversations])
+  useMountEffect(() => { loadConversations() })
 
   const handleSend = async () => {
     const trimmed = input.trim()
     if (!trimmed || isLoading) return
 
     const userMsg: ChatMessage = { role: 'user', content: trimmed }
-    setMessages(prev => [...prev, userMsg])
+    flushSync(() => setMessages(prev => [...prev, userMsg]))
+    scrollToBottom()
     setInput('')
     setIsLoading(true)
 
@@ -54,14 +55,16 @@ export function AgentPage() {
         content: res.answer,
         metadata: res.metadata,
       }
-      setMessages(prev => [...prev, assistantMsg])
+      flushSync(() => setMessages(prev => [...prev, assistantMsg]))
+      scrollToBottom()
       loadConversations()
     } catch (err) {
       const errMsg: ChatMessage = {
         role: 'assistant',
         content: `Error: ${err instanceof Error ? err.message : 'Something went wrong'}`,
       }
-      setMessages(prev => [...prev, errMsg])
+      flushSync(() => setMessages(prev => [...prev, errMsg]))
+      scrollToBottom()
     }
     setIsLoading(false)
     inputRef.current?.focus()
@@ -77,7 +80,8 @@ export function AgentPage() {
   const loadConversation = async (id: string) => {
     try {
       const data = await api.getConversation(id)
-      setMessages(data.messages)
+      flushSync(() => setMessages(data.messages))
+      scrollToBottom()
       setConversationId(id)
       setShowHistory(false)
     } catch { /* empty */ }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useRef } from 'react'
 import {
   Upload, FileText, ImageIcon, Video, Trash2, ChevronDown, ChevronUp,
   Loader2,
@@ -6,6 +6,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import * as api from '@/lib/api'
+import { useMountEffect } from '@/lib/hooks'
 import type { FileItem, ChunkItem, FrameItem } from '@/types'
 import { cn, toDataUrl } from '@/lib/utils'
 
@@ -22,14 +23,14 @@ export function DataPage() {
   const [expandedUuid, setExpandedUuid] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const loadFiles = useCallback(async () => {
+  const loadFiles = async () => {
     try {
       const data = await api.getFiles()
       setFiles(data)
     } catch { /* empty */ }
-  }, [])
+  }
 
-  useEffect(() => { loadFiles() }, [loadFiles])
+  useMountEffect(() => { loadFiles() })
 
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList?.length) return
@@ -207,13 +208,13 @@ function DocumentDetail({ uuid }: { uuid: string }) {
   const [chunks, setChunks] = useState<ChunkItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
+  useMountEffect(() => {
     setIsLoading(true)
     api.getChunks(uuid)
       .then(data => setChunks(data.chunks))
       .catch(() => {})
       .finally(() => setIsLoading(false))
-  }, [uuid])
+  })
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading chunks...</div>
   if (!chunks.length) return <div className="text-sm text-muted-foreground">No chunks extracted yet</div>
@@ -274,7 +275,7 @@ function VideoDetail({ uuid }: { uuid: string }) {
   const [transcription, setTranscription] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
+  useMountEffect(() => {
     setIsLoading(true)
     Promise.all([
       api.getFrames(uuid).catch(() => ({ frames: [] })),
@@ -283,7 +284,7 @@ function VideoDetail({ uuid }: { uuid: string }) {
       setFrames('frames' in f ? f.frames : [])
       setTranscription('full_text' in t ? t.full_text : '')
     }).finally(() => setIsLoading(false))
-  }, [uuid])
+  })
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading video data...</div>
 
