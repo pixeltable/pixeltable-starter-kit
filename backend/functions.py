@@ -41,7 +41,7 @@ def web_search(keywords: str, max_results: int = 5) -> str:
 def assemble_context(
     question: str,
     tool_outputs: list[dict[str, Any]] | None,
-    doc_context: list[dict[str, Any] | str] | None,
+    doc_context: list[Any] | None,
     chat_memory_context: list[dict[str, Any]] | None = None,
 ) -> str:
     """Combine all context sources into a single text block for the LLM."""
