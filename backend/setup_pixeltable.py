@@ -5,6 +5,7 @@ Run once to initialize the database schema:
 
 WARNING: This drops and recreates the 'app' namespace on every run.
 """
+import os
 import config
 import pixeltable as pxt
 
@@ -21,7 +22,10 @@ from pixeltable.functions.video import extract_audio, frame_iterator
 
 import functions
 
-pxt.drop_dir(config.APP_NAMESPACE, force=True)
+# Only drop the namespace if explicitly requested, to preserve data across restarts
+if os.getenv("RESET_SCHEMA", "false").lower() == "true":
+    pxt.drop_dir(config.APP_NAMESPACE, force=True)
+
 pxt.create_dir(config.APP_NAMESPACE, if_exists="ignore")
 
 # ── 1. Document Pipeline ─────────────────────────────────────────────────────
