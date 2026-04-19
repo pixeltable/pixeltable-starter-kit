@@ -1666,7 +1666,7 @@ wheels = [
 
 [[package]]
 name = "pixeltable"
-version = "0.5.20"
+version = "0.5.28"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1705,8 +1705,34 @@ dependencies = [
     { name = "tzlocal" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/f5/7d1ca94a60caedc128fa55a4b9e81f5552fed3fe59571298bf2d3f99f519/pixeltable-0.5.20-py3-none-any.whl", hash = "sha256:783b11377c9b3b8bd6357efa8f6e4095f0c2c31fa30b9be81a24d52652b60ca9", size = 640527, upload-time = "2026-03-03T01:01:26.81Z" },
+    { url = "https://files.pythonhosted.org/packages/06/00/5363359493ef316118efbe2d176bc109db39efba6583de0de67345cd4e75/pixeltable-0.5.28-py3-none-any.whl", hash = "sha256:4e9223e763ea47a57ad70590a650800054f17fd24583e0e57961b6e30cb012b8", size = 926777, upload-time = "2026-04-17T23:17:39.506Z" },
 ]
+
+[[package]]
+name = "pixeltable-orchestration"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pillow" },
+    { name = "pixeltable" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "sqlalchemy" },
+]
+
+[package.optional-dependencies]
+openai = [
+    { name = "openai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
+    { name = "pillow", specifier = ">=10.0" },
+    { name = "pixeltable", specifier = ">=0.5.28" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.1" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+]
+provides-extras = ["openai"]
 
 [[package]]
 name = "pixeltable-pgserver"
@@ -1749,32 +1775,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/05/ef/68e11e508a63e04aea5760ed6a162d32257112e74b76aa10c8f7209e380f/pixeltable_pgserver-0.5.0-cp314-cp314-win_amd64.whl", hash = "sha256:ce3a1c7782d8fda3cd16d8a2f7d5efc6b8623486ee76ff371ad93604c389d8c0", size = 13914906, upload-time = "2026-01-14T21:04:06.444Z" },
     { url = "https://files.pythonhosted.org/packages/ea/3d/549a2209a3c79eee287afbd0f4872111ddf7c2e8dfa01bbda18a54da9f9a/pixeltable_pgserver-0.5.0-cp314-cp314-win_arm64.whl", hash = "sha256:96fecf1e4c41185e577d4e2e2b28eee198584003e66998a681a94541b9ff1c5c", size = 13913777, upload-time = "2026-01-14T21:04:08.493Z" },
 ]
-
-[[package]]
-name = "pixeltable-pipeline"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "pillow" },
-    { name = "pixeltable" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "sqlalchemy" },
-]
-
-[package.optional-dependencies]
-openai = [
-    { name = "openai" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
-    { name = "pillow", specifier = ">=10.0" },
-    { name = "pixeltable", specifier = ">=0.5.19" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.1" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
-]
-provides-extras = ["openai"]
 
 [[package]]
 name = "platformdirs"

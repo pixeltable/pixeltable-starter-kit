@@ -64,9 +64,8 @@ cd pixeltable-starter-kit
 cp .env.example .env          # add ANTHROPIC_API_KEY and OPENAI_API_KEY
 
 cd backend
-uv sync                       # creates .venv, resolves and installs deps
+uv sync                       # creates .venv, installs deps including en_core_web_sm
 source .venv/bin/activate
-python -m spacy download en_core_web_sm
 python setup_pixeltable.py    # initialize schema (idempotent; set RESET_SCHEMA=true to wipe)
 python main.py                # http://localhost:8000
 

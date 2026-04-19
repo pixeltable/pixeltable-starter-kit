@@ -27,7 +27,7 @@ def search(body: SearchRequest):
     if "document" in body.types:
         try:
             chunks = pxt.get_table(f"{config.APP_NAMESPACE}.chunks")
-            sim = chunks.text.similarity(body.query)
+            sim = chunks.text.similarity(string=body.query)
             rows = list(
                 chunks.where(sim > body.threshold)
                 .order_by(sim, asc=False)
@@ -58,7 +58,7 @@ def search(body: SearchRequest):
     if "image" in body.types:
         try:
             imgs = pxt.get_table(f"{config.APP_NAMESPACE}.images")
-            sim = imgs.image.similarity(body.query)
+            sim = imgs.image.similarity(string=body.query)
             rows = list(
                 imgs.where(sim > 0.2)
                 .order_by(sim, asc=False)
@@ -89,7 +89,7 @@ def search(body: SearchRequest):
     if "video_frame" in body.types:
         try:
             frames = pxt.get_table(f"{config.APP_NAMESPACE}.video_frames")
-            sim = frames.frame.similarity(body.query)
+            sim = frames.frame.similarity(string=body.query)
             rows = list(
                 frames.where(sim > 0.2)
                 .order_by(sim, asc=False)
@@ -118,7 +118,7 @@ def search(body: SearchRequest):
     if "transcript" in body.types:
         try:
             sents = pxt.get_table(f"{config.APP_NAMESPACE}.video_sentences")
-            sim = sents.text.similarity(body.query)
+            sim = sents.text.similarity(string=body.query)
             rows = list(
                 sents.where(sim > body.threshold)
                 .order_by(sim, asc=False)

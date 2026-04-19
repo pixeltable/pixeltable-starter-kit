@@ -72,10 +72,9 @@ cp .env.example .env   # add your ANTHROPIC_API_KEY and OPENAI_API_KEY
 
 # Backend
 cd backend
-uv sync
+uv sync                      # installs deps + spaCy en_core_web_sm
 source .venv/bin/activate
-python -m spacy download en_core_web_sm
-python setup_pixeltable.py   # initialize schema (one-time)
+python setup_pixeltable.py   # initialize schema (idempotent; set RESET_SCHEMA=true to wipe)
 python main.py               # http://localhost:8000
 
 # Frontend (new terminal)

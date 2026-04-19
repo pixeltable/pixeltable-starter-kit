@@ -56,7 +56,8 @@ class DeleteResponse(BaseModel):
 class ChunkItem(BaseModel):
     text: str
     title: str | None = None
-    heading: str | None = None
+    # Pixeltable's DocumentSplitter returns heading as {"h1": "...", "h2": "...", ...}
+    heading: dict[str, str] | None = None
     page: int | None = None
 
 

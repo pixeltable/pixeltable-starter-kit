@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Full-stack starter app powered by Pixeltable"
 requires-python = ">=3.10"
 dependencies = [
-    "pixeltable>=0.5.19",
+    "pixeltable>=0.5.28",
     "fastapi",
     "uvicorn[standard]",
     "python-dotenv",
@@ -14,5 +14,12 @@ dependencies = [
     "sentence-transformers",
     "duckduckgo-search",
     "spacy",
+    "en-core-web-sm",
     "tiktoken",
+    # Pixeltable optional peers pulled in because we accept .md/.html uploads
+    "mistune>=3",
+    "lxml",
 ]
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }

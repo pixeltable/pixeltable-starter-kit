@@ -20,13 +20,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Pin the venv to the absolute Python path so symlinks survive at runtime
+# Pin the venv to the absolute Python path so symlinks survive at runtime.
+# en_core_web_sm is declared in pyproject.toml via [tool.uv.sources].
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --python /usr/local/bin/python3
-
-# Install spacy model directly into the venv
-RUN uv pip install --python .venv/bin/python \
-    en-core-web-sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 
 # Copy app code + built frontend
 COPY backend/ ./

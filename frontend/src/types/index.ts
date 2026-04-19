@@ -41,7 +41,8 @@ export interface FilesResponse {
 export interface ChunkItem {
   text: string
   title?: string
-  heading?: string
+  // Pixeltable's DocumentSplitter returns heading as a map, e.g. { h1: "...", h2: "..." }
+  heading?: Record<string, string>
   page?: number
 }
 

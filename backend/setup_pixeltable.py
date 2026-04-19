@@ -70,7 +70,7 @@ print("  Documents: table + chunks view + embedding index")
 
 @pxt.query
 def search_documents(query_text: str):
-    sim = chunks.text.similarity(query_text)
+    sim = chunks.text.similarity(string=query_text)
     return (
         chunks.where((sim > 0.5) & (pxt_str.len(chunks.text) > 30))
         .order_by(sim, asc=False)
@@ -115,7 +115,7 @@ print("  Images: table + thumbnail computed column + CLIP embedding index")
 
 @pxt.query
 def search_images(query_text: str):
-    sim = images.image.similarity(query_text)
+    sim = images.image.similarity(string=query_text)
     return (
         images.where(sim > 0.25)
         .order_by(sim, asc=False)
@@ -168,7 +168,7 @@ print("  Videos: keyframes view + CLIP embedding index")
 
 @pxt.query
 def search_video_frames(query_text: str):
-    sim = video_frames.frame.similarity(query_text)
+    sim = video_frames.frame.similarity(string=query_text)
     return (
         video_frames.where(sim > 0.25)
         .order_by(sim, asc=False)
@@ -220,7 +220,7 @@ print("  Videos: audio extraction -> Whisper transcription -> sentence embedding
 @pxt.query
 def search_video_transcripts(query_text: str):
     """Search video transcripts by semantic similarity."""
-    sim = video_sentences.text.similarity(query_text)
+    sim = video_sentences.text.similarity(string=query_text)
     return (
         video_sentences.where(sim > 0.7)
         .order_by(sim, asc=False)
@@ -265,7 +265,7 @@ def get_recent_chat_history(limit: int = 4):
 
 @pxt.query
 def search_chat_history(query_text: str):
-    sim = chat_history.content.similarity(query_text)
+    sim = chat_history.content.similarity(string=query_text)
     return (
         chat_history.where(sim > 0.8)
         .order_by(sim, asc=False)
