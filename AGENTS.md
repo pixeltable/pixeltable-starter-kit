@@ -67,7 +67,7 @@ cd backend
 uv sync                       # creates .venv, resolves and installs deps
 source .venv/bin/activate
 python -m spacy download en_core_web_sm
-python setup_pixeltable.py    # initialize schema (one-time, drops and recreates)
+python setup_pixeltable.py    # initialize schema (idempotent; set RESET_SCHEMA=true to wipe)
 python main.py                # http://localhost:8000
 
 # Frontend (separate terminal)
@@ -95,13 +95,13 @@ All FastAPI endpoints use `def`, not `async def`. Pixeltable operations are sync
 
 ### Schema-as-code
 
-`setup_pixeltable.py` is run once to initialize (or reset) the schema. It uses `drop_dir` + `create_dir` for a clean slate, and `if_exists="ignore"` for idempotent operations. The schema defines:
+`setup_pixeltable.py` is run once to initialize the schema and is safe to re-run. Every `create_dir`, `create_table`, `create_view`, `add_computed_column`, and `add_embedding_index` call uses `if_exists="ignore"`, so repeated runs never destroy data. To wipe and recreate the namespace from scratch, set `RESET_SCHEMA=true`, which calls `drop_dir` first. The schema defines:
 
 1. **Document pipeline** — table → `DocumentSplitter` view → sentence-transformer embedding index
 2. **Image pipeline** — table → thumbnail computed column → CLIP embedding index
 3. **Video pipeline** — table → `FrameIterator` view (keyframes + CLIP) → audio extraction → Whisper transcription → `StringSplitter` view → embedding index
 4. **Chat history** — table with embedding index for memory retrieval
-5. **Agent pipeline** — 8 chained computed columns: initial LLM call with tools → tool execution → context retrieval (RAG across all media) → history injection → context assembly → final LLM call → answer extraction
+5. **Agent pipeline** — 8-step chain (11 computed columns): initial LLM call with tools → tool execution → context retrieval (RAG across all media) → history injection → context assembly → final LLM call → answer extraction
 
 ### Pydantic everywhere
 

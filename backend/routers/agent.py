@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import pixeltable as pxt
 
 import config
@@ -14,27 +13,13 @@ from models import (
     ChatMessageItem,
     ConversationDetail,
     DeleteResponse,
+    QueryRequest,
+    QueryMetadata,
+    QueryResponse,
 )
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agent", tags=["agent"])
-
-
-class QueryRequest(BaseModel):
-    query: str
-    conversation_id: str | None = None
-
-
-class QueryMetadata(BaseModel):
-    timestamp: str
-    has_doc_context: bool
-    has_image_context: bool
-    has_tool_output: bool
-
-
-class QueryResponse(BaseModel):
-    answer: str
-    metadata: QueryMetadata
 
 
 @router.post("/query", response_model=QueryResponse)

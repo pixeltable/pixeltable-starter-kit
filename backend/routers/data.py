@@ -21,8 +21,8 @@ router = APIRouter(prefix="/api/data", tags=["data"])
 UPLOAD_DIR = Path(config.UPLOAD_FOLDER)
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-VIDEO_EXTS = {".mp4", ".mov", ".avi"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff"}
+VIDEO_EXTS = {".mp4", ".mov", ".avi", ".webm", ".mkv"}
 
 
 def _classify_file(filename: str) -> str:

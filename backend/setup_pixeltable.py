@@ -3,7 +3,12 @@
 Run once to initialize the database schema:
     python setup_pixeltable.py
 
-WARNING: This drops and recreates the 'app' namespace on every run.
+The default run is idempotent: `create_dir` + every `create_table`,
+`create_view`, `add_computed_column`, and `add_embedding_index` call uses
+`if_exists="ignore"`, so re-running never destroys data.
+
+To wipe and recreate the 'app' namespace from scratch:
+    RESET_SCHEMA=true python setup_pixeltable.py
 """
 import os
 import config

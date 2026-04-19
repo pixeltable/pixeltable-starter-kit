@@ -83,6 +83,25 @@ class TranscriptionResponse(BaseModel):
     full_text: str
 
 
+# ── Agent query request/response ─────────────────────────────────────────────
+
+class QueryRequest(BaseModel):
+    query: str
+    conversation_id: str | None = None
+
+
+class QueryMetadata(BaseModel):
+    timestamp: str
+    has_doc_context: bool
+    has_image_context: bool
+    has_tool_output: bool
+
+
+class QueryResponse(BaseModel):
+    answer: str
+    metadata: QueryMetadata
+
+
 # ── Agent conversation responses ─────────────────────────────────────────────
 
 class ConversationSummary(BaseModel):

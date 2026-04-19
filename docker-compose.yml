@@ -1,4 +1,12 @@
 # Pixeltable Starter Kit — local development
+#
+# Two persistent volumes that MUST be kept together:
+#   pixeltable-data  -> /data/pixeltable   Pixeltable's managed store (catalog + blobs)
+#   uploads          -> /app/data          raw uploaded files; Pixeltable rows reference
+#                                          these paths (see backend/routers/data.py)
+# Deleting `uploads` without also resetting the schema will leave dangling refs.
+# For production, set PIXELTABLE_INPUT_MEDIA_DEST=s3://... so Pixeltable owns the
+# media and the `uploads` volume can be dropped entirely.
 services:
   app:
     build: .

@@ -28,10 +28,14 @@ DEFAULT_TEMPERATURE: float = 0.7
 
 # File upload
 UPLOAD_FOLDER = "data"
+# Formats supported by Pixeltable's Document / Image / Video types respectively.
+# Document: DocumentSplitter handles PDF, HTML, TXT, MD, XML.
+# Image:    PIL-readable (JPEG, PNG, GIF, WEBP, BMP, TIFF).
+# Video:    FFmpeg-readable (MP4, MOV, AVI, WEBM, MKV).
 ALLOWED_EXTENSIONS = {
-    "pdf", "txt", "md",
-    "jpg", "jpeg", "png", "gif", "webp",
-    "mp4", "mov", "avi",
+    "pdf", "txt", "md", "html", "xml",
+    "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff",
+    "mp4", "mov", "avi", "webm", "mkv",
 }
 
 # CORS

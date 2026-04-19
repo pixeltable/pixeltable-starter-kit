@@ -26,7 +26,7 @@ graph TD
         Views["<b>Views & Iterators</b><br/>chunks · keyframes · transcripts"]
         CC["<b>Computed Columns</b> · @pxt.udf<br/>thumbnails · transcription · embeddings"]
         EI["<b>Embedding Indexes</b> · @pxt.query<br/>sentence-transformers · CLIP"]
-        AP["<b>Agent Pipeline</b><br/>8 chained columns<br/>tools → RAG → answer"]
+        AP["<b>Agent Pipeline</b><br/>8-step chain (11 computed cols)<br/>tools → RAG → answer"]
     end
 
     D & S & A --> API
@@ -96,7 +96,7 @@ cp .env.example .env          # add API keys
 docker compose up --build     # http://localhost:8000
 ```
 
-Pixeltable data persists across restarts via named Docker volumes. To reset everything: `docker compose down -v`.
+Pixeltable data persists across restarts via named Docker volumes. Two volumes are used: `pixeltable-data` (catalog + managed blobs at `/data/pixeltable`) and `uploads` (raw files at `/app/data` that Pixeltable rows reference by path). Keep both or neither — deleting only `uploads` will dangle refs. To reset everything: `docker compose down -v`. For production, set `PIXELTABLE_INPUT_MEDIA_DEST=s3://...` so Pixeltable owns the media and the `uploads` volume becomes unnecessary.
 
 ### Helm (any existing Kubernetes cluster)
 
@@ -212,6 +212,7 @@ Pixeltable is designed to work well with AI coding assistants. See [Building wit
 - **[MCP Server](https://github.com/pixeltable/mcp-server-pixeltable-developer)** — interactive Pixeltable exploration (tables, queries, Python REPL)
 - **[Claude Code Skill](https://github.com/pixeltable/pixeltable-skill)** — deep Pixeltable expertise for Claude
 - **[AGENTS.md](AGENTS.md)** — architecture guide for AI agents working with this codebase
+- **[`docs/MIGRATION_PXTFASTAPIROUTER.md`](docs/MIGRATION_PXTFASTAPIROUTER.md)** — notes on `pixeltable.serve.PxtFastAPIRouter` (PR #1268): what it replaces, where facades must stay, and a reference `/api/pxt` client
 
 ## Learn More
 
