@@ -132,3 +132,89 @@ curl -X POST http://localhost:8000/api/pxt/agent/query \
   -d '{"prompt": "What is Pixeltable?", "timestamp": "2026-05-05T12:00:00", ...}'
 # {"answer": "...", "metadata": {...}}
 ```
+
+---
+
+## Alternative: TOML service file + `pxt serve` CLI
+
+Pixeltable 0.6.0 also ships a `pxt serve` CLI that reads a `service.toml` file — no custom FastAPI app needed. See `backend/service.toml` for the full starter kit config.
+
+### Quick start with TOML
+
+```bash
+cd backend
+pxt serve starter-kit --config service.toml
+# http://localhost:8000/docs (OpenAPI)
+```
+
+### Quick start with single-endpoint CLI
+
+```bash
+# Serve one query endpoint without any config file
+pxt serve query --query setup_pixeltable.search_documents \
+  --path /search --port 8000
+```
+
+### When to use which
+
+| Approach | Best for |
+|----------|----------|
+| **`pxt_serve.py`** (Python `FastAPIRouter`) | Custom post-processing (`@insert_route`), co-existing with facades, full app |
+| **`service.toml`** + `pxt serve` | Standalone serving, team-versionable config, no custom Python needed |
+| **`pxt serve <type>`** CLI | Quick one-off experiments, single endpoint |
+
+The TOML form supports `insert`, `update`, `delete`, and `query` routes, plus `background`, `export_sql`, `uploadfile_inputs`, `return_fileresponse`, and `one_row`. The only things it **cannot** do are decorator-style post-processing (`@insert_route` / `@update_route`) and custom middleware — those require the Python API.
+
+### TOML route reference
+
+```toml
+# Insert with file upload
+[[service.routes]]
+type = "insert"
+table = "app.images"
+path = "/upload"
+uploadfile_inputs = ["image"]
+outputs = ["uuid", "thumbnail"]
+
+# Delete by non-PK column
+[[service.routes]]
+type = "delete"
+table = "app.chat_history"
+path = "/delete-conversation"
+match_columns = ["conversation_id"]
+
+# Query (POST, multi-row response)
+[[service.routes]]
+type = "query"
+path = "/search"
+query = "setup_pixeltable.search_documents"
+
+# Query (GET, single-row lookup)
+[[service.routes]]
+type = "query"
+path = "/lookup"
+query = "setup_pixeltable.get_item_by_id"
+one_row = true
+method = "get"
+
+# Background insert (returns job handle, poll /jobs/{id})
+[[service.routes]]
+type = "insert"
+table = "app.agent"
+path = "/agent/query"
+inputs = ["prompt", "timestamp"]
+outputs = ["answer"]
+background = true
+
+# Insert with SQL export
+[[service.routes]]
+type = "insert"
+table = "app.documents"
+path = "/ingest"
+outputs = ["uuid", "text"]
+[service.routes.export_sql]
+db_connect = "postgresql+psycopg://user:pw@host/analytics"
+table = "documents_log"
+```
+
+See the [official serving docs](https://docs.pixeltable.com/howto/deployment/serving) for the complete reference.

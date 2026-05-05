@@ -174,6 +174,7 @@ backend/
 ├── functions.py            @pxt.udf definitions (web search, context assembly)
 ├── setup_pixeltable.py     Schema + @pxt.query (tables, views, indexes, agent pipeline)
 ├── pxt_serve.py            Pixeltable FastAPIRouter (v0.6+): declarative /api/pxt routes
+├── service.toml            TOML alternative for `pxt serve` CLI (standalone serving)
 ├── pyproject.toml          Dependencies (uv sync)
 └── routers/
     ├── data.py             Upload, list, delete, chunks, frames, transcription

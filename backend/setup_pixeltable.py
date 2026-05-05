@@ -418,5 +418,9 @@ def setup():
     print("\nSchema setup complete.")
 
 
-if __name__ == "__main__":
-    setup()
+# Always run setup on import — the _initialized guard makes it safe to
+# call multiple times. This is required for:
+# 1. `python setup_pixeltable.py` (standalone CLI)
+# 2. `pxt serve ... --config service.toml` (TOML modules = ["setup_pixeltable"])
+# 3. `main.py` lifespan hook and `pxt_serve.py` both calling setup()
+setup()

@@ -1,0 +1,114 @@
+# Pixeltable service.toml — TOML alternative to pxt_serve.py
+#
+# Exposes the same routes as pxt_serve.py but via the `pxt serve` CLI:
+#
+#   pxt serve starter-kit --config service.toml
+#
+# This is useful for standalone serving without a custom FastAPI app.
+# For the full app (facade routers + SPA), use `python main.py` instead.
+#
+# NOTE: The @insert_route decorator (agent query with post-processing)
+# and the `pxt serve` CLI / TOML modules import are Python-only features.
+# The agent query route here uses a plain `add_insert_route` equivalent
+# (returns raw column values, no QueryResponse reshaping).
+
+[[service]]
+name = "starter-kit"
+title = "Pixeltable Starter Kit"
+port = 8000
+
+# Import the setup module so @pxt.query functions are registered.
+# The module import triggers setup() automatically (see the module's
+# bottom-level guard), ensuring tables and queries exist before routes resolve.
+modules = ["setup_pixeltable"]
+
+# ── Document insert ──────────────────────────────────────────────────
+
+[[service.routes]]
+type = "insert"
+table = "app.documents"
+path = "/tables/documents/insert"
+uploadfile_inputs = ["document"]
+inputs = ["timestamp"]
+outputs = ["uuid"]
+
+# ── Image insert ─────────────────────────────────────────────────────
+
+[[service.routes]]
+type = "insert"
+table = "app.images"
+path = "/tables/images/insert"
+uploadfile_inputs = ["image"]
+inputs = ["timestamp"]
+outputs = ["uuid", "thumbnail"]
+
+# ── Video insert ─────────────────────────────────────────────────────
+
+[[service.routes]]
+type = "insert"
+table = "app.videos"
+path = "/tables/videos/insert"
+uploadfile_inputs = ["video"]
+inputs = ["timestamp"]
+outputs = ["uuid"]
+
+# ── Delete routes ────────────────────────────────────────────────────
+
+[[service.routes]]
+type = "delete"
+table = "app.documents"
+path = "/tables/documents/delete"
+
+[[service.routes]]
+type = "delete"
+table = "app.images"
+path = "/tables/images/delete"
+
+[[service.routes]]
+type = "delete"
+table = "app.videos"
+path = "/tables/videos/delete"
+
+[[service.routes]]
+type = "delete"
+table = "app.chat_history"
+path = "/tables/chat-history/delete"
+match_columns = ["conversation_id"]
+
+# ── Query routes (similarity search) ─────────────────────────────────
+
+[[service.routes]]
+type = "query"
+path = "/queries/documents"
+query = "setup_pixeltable.search_documents"
+
+[[service.routes]]
+type = "query"
+path = "/queries/images"
+query = "setup_pixeltable.search_images"
+
+[[service.routes]]
+type = "query"
+path = "/queries/video-frames"
+query = "setup_pixeltable.search_video_frames"
+
+[[service.routes]]
+type = "query"
+path = "/queries/video-transcripts"
+query = "setup_pixeltable.search_video_transcripts"
+
+[[service.routes]]
+type = "query"
+path = "/queries/chat-history"
+query = "setup_pixeltable.search_chat_history"
+
+# ── Agent (plain insert — no post-processing) ────────────────────────
+# The @insert_route decorator (custom QueryResponse reshaping) is
+# Python-only. This plain insert returns raw column values.
+
+[[service.routes]]
+type = "insert"
+table = "app.agent"
+path = "/agent/query"
+inputs = ["prompt", "timestamp", "initial_system_prompt", "final_system_prompt", "max_tokens", "temperature"]
+outputs = ["answer", "doc_context", "image_context", "tool_output"]

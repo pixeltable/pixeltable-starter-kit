@@ -130,8 +130,8 @@ def build_pxt_router() -> FastAPIRouter:
     def agent_query(
         *,
         answer: dict | None = None,
-        doc_context: dict | None = None,
-        image_context: dict | None = None,
+        doc_context: list | None = None,
+        image_context: list | None = None,
         tool_output: dict | None = None,
     ) -> QueryResponse:
         answer_text = str(answer) if answer else "Error: No answer generated."

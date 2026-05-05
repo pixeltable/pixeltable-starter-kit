@@ -36,39 +36,47 @@ Ed creates a `service.toml` file. This declarative file is the best practice for
 
 ```toml
 # service.toml
-[service]
-title = "My AI Agent"
+[[service]]
+name = "my-agent"
 port = 8000
 
-[[routes]]
+[[service.routes]]
 type = "insert"
 table = "prod_app.queries"
 path = "/ask"
 inputs = ["prompt"]
-outputs = ["answer"]
+outputs = ["prompt", "answer"]
 ```
 
 Ed runs the service:
 ```bash
-pxt serve config service.toml
+pxt serve my-agent --config service.toml
+```
+
+Or for a quick one-off without a TOML file:
+```bash
+pxt serve insert --table prod_app.queries --path /ask \
+  --inputs prompt --outputs prompt answer --port 8000
 ```
 
 ### Path B: Existing FastAPI App
-If Ed already has a FastAPI application, he integrates Pixeltable using the `APIRouter`.
+If Ed already has a FastAPI application, he integrates Pixeltable using the `FastAPIRouter`.
 
 ```python
 # main.py
-from fastapi import FastAPI
-from pixeltable.serving.fastapi import APIRouter
+import fastapi
+import uvicorn
 import pixeltable as pxt
-
-app = FastAPI()
-pxt_router = APIRouter()
+from pixeltable.serving import FastAPIRouter
 
 t = pxt.get_table('prod_app.queries')
-pxt_router.add_insert_route(t, path="/ask")
 
-app.include_router(pxt_router)
+app = fastapi.FastAPI()
+router = FastAPIRouter()
+router.add_insert_route(t, path="/ask", inputs=["prompt"], outputs=["prompt", "answer"])
+app.include_router(router)
+
+uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
 ---

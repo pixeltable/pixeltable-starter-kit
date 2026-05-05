@@ -31,6 +31,7 @@ backend/
 ├── functions.py             @pxt.udf definitions (web search, context assembly)
 ├── setup_pixeltable.py      Declarative schema: tables, views, indexes, @pxt.query, agent pipeline
 ├── pxt_serve.py             Pixeltable FastAPIRouter (v0.6+): declarative /api/pxt routes
+├── service.toml             TOML config for `pxt serve` CLI (standalone serving alternative)
 ├── pyproject.toml           Dependencies managed via uv
 └── routers/
     ├── data.py              Upload, list, delete, chunks, frames, transcription
@@ -95,7 +96,7 @@ All FastAPI endpoints use `def`, not `async def`. Pixeltable operations are sync
 
 ### Schema-as-code
 
-`setup_pixeltable.py` exposes a `setup()` function that creates (or reconnects to) the full schema. It is called automatically on server startup via `main.py`'s lifespan hook, and is also safe to run standalone (`python setup_pixeltable.py`). Every `create_dir`, `create_table`, `create_view`, `add_computed_column`, and `add_embedding_index` call uses `if_exists="ignore"` (with explicit `idx_name` to avoid a Pixeltable 0.6.0 idempotency issue), so repeated calls never destroy data. To wipe and recreate the namespace from scratch, set `RESET_SCHEMA=true`, which calls `drop_dir` first. The `@pxt.query` functions are defined inside `setup()` after their tables exist (required because `@pxt.query` eagerly evaluates the function body in 0.6+) and exported as module-level attributes for use by `pxt_serve.py` and the agent pipeline. The schema defines:
+`setup_pixeltable.py` exposes a `setup()` function that creates (or reconnects to) the full schema. It runs automatically on module import (guarded by `_initialized` so multiple imports are no-ops), which means schema is ready whenever any code imports `setup_pixeltable` — including `pxt_serve.py`, `main.py`, or the `pxt serve` CLI via `modules = ["setup_pixeltable"]` in `service.toml`. It is also safe to run standalone (`python setup_pixeltable.py`). Every `create_dir`, `create_table`, `create_view`, `add_computed_column`, and `add_embedding_index` call uses `if_exists="ignore"` (with explicit `idx_name` to avoid a Pixeltable 0.6.0 idempotency issue), so repeated calls never destroy data. To wipe and recreate the namespace from scratch, set `RESET_SCHEMA=true`, which calls `drop_dir` first. The `@pxt.query` functions are defined inside `setup()` after their tables exist (required because `@pxt.query` eagerly evaluates the function body in 0.6+) and exported as module-level attributes for use by `pxt_serve.py`, the agent pipeline, and `service.toml` query routes. The schema defines:
 
 1. **Document pipeline** — table → `DocumentSplitter` view → sentence-transformer embedding index
 2. **Image pipeline** — table → thumbnail computed column → CLIP embedding index

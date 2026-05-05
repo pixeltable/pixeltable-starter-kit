@@ -18,15 +18,15 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        import setup_pixeltable
-        setup_pixeltable.setup()
-        logger.info("Pixeltable schema initialized")
-    except Exception:
+    # Schema auto-initializes when setup_pixeltable is imported (see
+    # pxt_serve.py). The _initialized guard makes repeat calls safe.
+    import setup_pixeltable
+    if setup_pixeltable._initialized:
+        logger.info("Pixeltable schema ready")
+    else:
         logger.warning(
             "Pixeltable schema not initialized. "
-            "Run 'python setup_pixeltable.py' first. "
-            "The server will start but API calls will fail."
+            "Run 'python setup_pixeltable.py' first."
         )
     yield
 
