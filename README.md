@@ -172,7 +172,8 @@ backend/
 ├── config.py               Model IDs, system prompts, env overrides
 ├── models.py               Pydantic models (row schemas + API responses)
 ├── functions.py            @pxt.udf definitions (web search, context assembly)
-├── setup_pixeltable.py     Full multimodal schema (tables, views, indexes, agent)
+├── setup_pixeltable.py     Schema + @pxt.query (tables, views, indexes, agent pipeline)
+├── pxt_serve.py            Pixeltable FastAPIRouter (v0.6+): declarative /api/pxt routes
 ├── pyproject.toml          Dependencies (uv sync)
 └── routers/
     ├── data.py             Upload, list, delete, chunks, frames, transcription

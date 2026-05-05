@@ -1,5 +1,5 @@
 /**
- * Reference client for calling /api/pxt ONLY (PR #1268-style).
+ * Reference client for calling /api/pxt (Pixeltable FastAPIRouter v0.6+).
  *
  * Best practice for this template: keep frontend/src/lib/api.ts → facades
  * (/api/data, /api/search, /api/agent). Use this file to understand raw router
@@ -182,7 +182,7 @@ export async function searchPxt(params: {
 
   if (types.has('video_frame')) {
     const res = await requestJson<PxtQueryRows<FrameRow>>(
-      `${PXT}/queries/video_frames`,
+      `${PXT}/queries/video-frames`,
       { method: 'POST', body: JSON.stringify({ query_text: q }) },
     )
     for (const r of res.rows.slice(0, limit)) {
@@ -198,7 +198,7 @@ export async function searchPxt(params: {
 
   if (types.has('transcript')) {
     const res = await requestJson<PxtQueryRows<TranscriptRow>>(
-      `${PXT}/queries/video_transcripts`,
+      `${PXT}/queries/video-transcripts`,
       { method: 'POST', body: JSON.stringify({ query_text: q }) },
     )
     for (const r of res.rows.slice(0, limit)) {
@@ -231,24 +231,14 @@ const AGENT_DEFAULTS = {
   temperature: 0.7,
 }
 
-export type AgentInsertRowResponse = {
-  answer?: string
-  prompt?: string
-  timestamp?: string
-  doc_context?: unknown
-  image_context?: unknown
-  tool_output?: unknown
-  [key: string]: unknown
-}
-
 /**
- * Replaces api.sendQuery(text, conversationId) only for "get an answer from agent row".
+ * Uses the @insert_route decorated endpoint which returns a shaped QueryResponse.
  * - Does NOT pass conversation_id (not an agent table column).
  * - Does NOT write chat_history — sidebar/conversations break unless you add calls or keep /api/agent/query.
  */
-export async function sendQueryPxtRaw(
+export async function sendQueryPxt(
   prompt: string,
-): Promise<AgentInsertRowResponse> {
+): Promise<{ answer: string; metadata: QueryMetadata }> {
   const body = {
     prompt,
     timestamp: new Date().toISOString(),
@@ -257,27 +247,10 @@ export async function sendQueryPxtRaw(
     max_tokens: AGENT_DEFAULTS.max_tokens,
     temperature: AGENT_DEFAULTS.temperature,
   }
-  return requestJson<AgentInsertRowResponse>(`${PXT}/tables/agent/insert`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-}
-
-/** Optional: map raw row to existing QueryMetadata + answer for minimal UI churn. */
-export function toQueryResponseLike(row: AgentInsertRowResponse): {
-  answer: string
-  metadata: QueryMetadata
-} {
-  const ts = row.timestamp ?? new Date().toISOString()
-  return {
-    answer: String(row.answer ?? 'Error: No answer generated.'),
-    metadata: {
-      timestamp: typeof ts === 'string' ? ts : String(ts),
-      has_doc_context: Boolean(row.doc_context),
-      has_image_context: Boolean(row.image_context),
-      has_tool_output: Boolean(row.tool_output),
-    },
-  }
+  return requestJson<{ answer: string; metadata: QueryMetadata }>(
+    `${PXT}/agent/query`,
+    { method: 'POST', body: JSON.stringify(body) },
+  )
 }
 
 // ── Background job (optional) ───────────────────────────────────────────────
@@ -300,7 +273,7 @@ export async function pollPxtJob(jobUrl: string): Promise<JobStatus> {
 // search-page.tsx — swap:
 //   const res = await searchPxt({ queryText: query.trim(), types: activeTypes, limit: 30 })
 //
-// agent-page.tsx — raw insert loses chat; realistic path is keep api.sendQuery OR:
-//   const row = await sendQueryPxtRaw(trimmed)
-//   const res = toQueryResponseLike(row)
-//   // loadConversations() will NOT refresh unless backend still writes chat_history
+// agent-page.tsx — @insert_route returns shaped QueryResponse:
+//   const res = await sendQueryPxt(trimmed)
+//   // res.answer, res.metadata already shaped
+//   // NOTE: chat_history is NOT written via this route — keep /api/agent/query for conversations

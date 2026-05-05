@@ -6,8 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-import pixeltable as pxt
-
 import config
 from routers import data, search, agent
 
@@ -21,8 +19,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        pxt.get_table("app.agent")
-        logger.info("Connected to Pixeltable schema")
+        import setup_pixeltable
+        setup_pixeltable.setup()
+        logger.info("Pixeltable schema initialized")
     except Exception:
         logger.warning(
             "Pixeltable schema not initialized. "
@@ -52,6 +51,19 @@ app.add_middleware(
 app.include_router(data.router)
 app.include_router(search.router)
 app.include_router(agent.router)
+
+# Pixeltable-native declarative routes (v0.6+).
+# Exposes the same tables/queries as the facade routers above, but via
+# Pixeltable's FastAPIRouter for scripts, admin, and direct API access.
+try:
+    from pxt_serve import build_pxt_router
+    app.include_router(build_pxt_router())
+    logger.info("Pixeltable FastAPIRouter mounted at /api/pxt")
+except Exception:
+    logger.warning(
+        "Could not mount Pixeltable FastAPIRouter. "
+        "Ensure 'python setup_pixeltable.py' has been run."
+    )
 
 
 @app.get("/api/health")

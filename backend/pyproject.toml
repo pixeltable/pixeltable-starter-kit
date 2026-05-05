@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Full-stack starter app powered by Pixeltable"
 requires-python = ">=3.10"
 dependencies = [
-    "pixeltable>=0.5.28",
+    "pixeltable>=0.6.0",
     "fastapi",
     "uvicorn[standard]",
     "python-dotenv",

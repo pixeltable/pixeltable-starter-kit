@@ -1496,6 +1496,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pathspec"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz", hash = "sha256:17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a", size = 135180, upload-time = "2026-04-27T01:46:08.907Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl", hash = "sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189", size = 57328, upload-time = "2026-04-27T01:46:07.06Z" },
+]
+
+[[package]]
 name = "pgvector"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1666,7 +1675,7 @@ wheels = [
 
 [[package]]
 name = "pixeltable"
-version = "0.5.28"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1686,6 +1695,7 @@ dependencies = [
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pathspec" },
     { name = "pgvector" },
     { name = "pillow" },
     { name = "pillow-heif" },
@@ -1705,7 +1715,7 @@ dependencies = [
     { name = "tzlocal" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/00/5363359493ef316118efbe2d176bc109db39efba6583de0de67345cd4e75/pixeltable-0.5.28-py3-none-any.whl", hash = "sha256:4e9223e763ea47a57ad70590a650800054f17fd24583e0e57961b6e30cb012b8", size = 926777, upload-time = "2026-04-17T23:17:39.506Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/29/8e915e773a879f53072bfb5df88b6094b9c5177b66f173372321511f79bf/pixeltable-0.6.0-py3-none-any.whl", hash = "sha256:debea2764ef3b2c2019b8606009a4d4d0b43ec139c60eb46421569c5f9e9877e", size = 964358, upload-time = "2026-05-01T08:37:15.966Z" },
 ]
 
 [[package]]
@@ -1728,7 +1738,7 @@ openai = [
 requires-dist = [
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
     { name = "pillow", specifier = ">=10.0" },
-    { name = "pixeltable", specifier = ">=0.5.28" },
+    { name = "pixeltable", specifier = ">=0.6.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1" },
     { name = "sqlalchemy", specifier = ">=2.0" },
 ]

@@ -3,7 +3,7 @@ name = "pixeltable-orchestration"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
-    "pixeltable>=0.5.28",
+    "pixeltable>=0.6.0",
     "pillow>=10.0",
     "psycopg[binary]>=3.1",
     "sqlalchemy>=2.0",

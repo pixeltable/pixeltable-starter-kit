@@ -29,7 +29,8 @@ backend/
 ├── config.py               Environment-driven settings (models, prompts, CORS)
 ├── models.py               Pydantic models: row schemas + all API responses
 ├── functions.py             @pxt.udf definitions (web search, context assembly)
-├── setup_pixeltable.py      Declarative schema: tables, views, indexes, agent pipeline
+├── setup_pixeltable.py      Declarative schema: tables, views, indexes, @pxt.query, agent pipeline
+├── pxt_serve.py             Pixeltable FastAPIRouter (v0.6+): declarative /api/pxt routes
 ├── pyproject.toml           Dependencies managed via uv
 └── routers/
     ├── data.py              Upload, list, delete, chunks, frames, transcription
@@ -82,7 +83,7 @@ Each decision below is intentional. Don't change it without understanding why.
 
 ### Pixeltable IS the data layer
 
-There is no ORM, no SQLAlchemy, no direct PostgreSQL client. Pixeltable handles storage, indexing, transformation, and retrieval. The `setup_pixeltable.py` file defines the entire data model declaratively — tables, views, computed columns, embedding indexes, and the agent pipeline — in ~380 lines.
+There is no ORM, no SQLAlchemy, no direct PostgreSQL client. Pixeltable handles storage, indexing, transformation, and retrieval. The `setup_pixeltable.py` file defines the entire data model declaratively — tables, views, computed columns, embedding indexes, `@pxt.query` functions, and the agent pipeline — in a single `setup()` function.
 
 ### Sync endpoints (`def`, not `async def`)
 
@@ -94,7 +95,7 @@ All FastAPI endpoints use `def`, not `async def`. Pixeltable operations are sync
 
 ### Schema-as-code
 
-`setup_pixeltable.py` is run once to initialize the schema and is safe to re-run. Every `create_dir`, `create_table`, `create_view`, `add_computed_column`, and `add_embedding_index` call uses `if_exists="ignore"`, so repeated runs never destroy data. To wipe and recreate the namespace from scratch, set `RESET_SCHEMA=true`, which calls `drop_dir` first. The schema defines:
+`setup_pixeltable.py` exposes a `setup()` function that creates (or reconnects to) the full schema. It is called automatically on server startup via `main.py`'s lifespan hook, and is also safe to run standalone (`python setup_pixeltable.py`). Every `create_dir`, `create_table`, `create_view`, `add_computed_column`, and `add_embedding_index` call uses `if_exists="ignore"` (with explicit `idx_name` to avoid a Pixeltable 0.6.0 idempotency issue), so repeated calls never destroy data. To wipe and recreate the namespace from scratch, set `RESET_SCHEMA=true`, which calls `drop_dir` first. The `@pxt.query` functions are defined inside `setup()` after their tables exist (required because `@pxt.query` eagerly evaluates the function body in 0.6+) and exported as module-level attributes for use by `pxt_serve.py` and the agent pipeline. The schema defines:
 
 1. **Document pipeline** — table → `DocumentSplitter` view → sentence-transformer embedding index
 2. **Image pipeline** — table → thumbnail computed column → CLIP embedding index
@@ -102,13 +103,26 @@ All FastAPI endpoints use `def`, not `async def`. Pixeltable operations are sync
 4. **Chat history** — table with embedding index for memory retrieval
 5. **Agent pipeline** — 8-step chain (11 computed columns): initial LLM call with tools → tool execution → context retrieval (RAG across all media) → history injection → context assembly → final LLM call → answer extraction
 
+### Dual-router architecture (v0.6+)
+
+The app mounts two router layers side-by-side:
+
+| Layer | Prefix | Role |
+|-------|--------|------|
+| **Facade routers** | `/api/data`, `/api/search`, `/api/agent` | SPA-facing endpoints with Pydantic DTOs, merged search, chat history management. These are what `frontend/src/lib/api.ts` calls. |
+| **Pixeltable FastAPIRouter** | `/api/pxt` | Declarative routes auto-generated from tables and `@pxt.query` functions. Useful for scripts, admin, direct API access, and showing what Pixeltable's serving layer can do. |
+
+Both hit the same Pixeltable tables and indexes. The SPA frontend only uses the facade routes — the `/api/pxt` routes are an optional companion for direct Pixeltable access. See `pxt_serve.py` for the implementation and `docs/MIGRATION_PXTFASTAPIROUTER.md` for the architecture rationale.
+
+Routes that **must** stay as facades (app-level orchestration the router can't express): `POST /api/search` (4-way fan-in), `GET /api/data/files` (3-table aggregation), `GET/POST /api/agent/conversations` (group-by conversation_id).
+
 ### Pydantic everywhere
 
 `models.py` contains both **row schemas** (for `table.insert()`) and **API response models** (for `response_model=`). Every endpoint declares its response model so `/docs` is self-documenting. Where Pixeltable query results match model fields directly, `ResultSet.to_pydantic()` converts them.
 
 ### `@pxt.udf` and `@pxt.query` for logic
 
-Business logic lives in Pixeltable functions, not endpoint handlers. `@pxt.udf` (in `functions.py`) for custom transforms like web search and context assembly. `@pxt.query` (in `setup_pixeltable.py`) for reusable similarity searches. Routers are thin — they insert rows, collect results, and return responses.
+Business logic lives in Pixeltable functions, not endpoint handlers. `@pxt.udf` (in `functions.py`) for custom transforms like web search and context assembly. `@pxt.query` (defined inside `setup_pixeltable.setup()`, exported as module attributes) for reusable similarity searches. Facade routers are thin — they insert rows, collect results, and return responses. The Pixeltable FastAPIRouter in `pxt_serve.py` exposes the same `@pxt.query` functions as declarative HTTP endpoints.
 
 ### Agent pipeline as computed columns
 
@@ -173,9 +187,10 @@ items = list(result.to_pydantic(MyPydanticModel))
 
 If you're new to this codebase, read in this order:
 
-1. `setup_pixeltable.py` — the core. Defines the entire data model and agent pipeline.
-2. `models.py` — all Pydantic models (row schemas + API responses).
-3. `routers/agent.py` — shows the insert-triggers-pipeline pattern.
-4. `routers/data.py` — shows CRUD + `to_pydantic()` conversion.
-5. `functions.py` — `@pxt.udf` definitions used by the agent.
-6. `frontend/src/lib/api.ts` + `types/index.ts` — how the frontend talks to the backend.
+1. `setup_pixeltable.py` — the core. Defines the entire data model, `@pxt.query` functions, and agent pipeline.
+2. `pxt_serve.py` — Pixeltable's `FastAPIRouter` integration (v0.6+). Shows how to expose tables and queries as declarative HTTP endpoints.
+3. `models.py` — all Pydantic models (row schemas + API responses).
+4. `routers/agent.py` — shows the insert-triggers-pipeline pattern (facade).
+5. `routers/data.py` — shows CRUD + `to_pydantic()` conversion (facade).
+6. `functions.py` — `@pxt.udf` definitions used by the agent.
+7. `frontend/src/lib/api.ts` + `types/index.ts` — how the frontend talks to the backend.
