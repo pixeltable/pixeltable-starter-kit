@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Search as SearchIcon, Loader2, FileText, ImageIcon, Film, AudioLines } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +21,6 @@ export function SearchPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(ALL_TYPES))
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const toggleType = (type: string) => {
     setActiveTypes(prev => {
@@ -57,7 +56,6 @@ export function SearchPage() {
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
-              ref={inputRef}
               type="text"
               placeholder="Semantic search across all your data..."
               value={query}

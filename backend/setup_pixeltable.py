@@ -12,6 +12,8 @@ To wipe and recreate the 'app' namespace from scratch:
 """
 
 import os
+import uuid as _uuid
+
 import config
 import pixeltable as pxt
 
@@ -29,14 +31,6 @@ from pixeltable.functions.video import extract_audio, frame_iterator
 import functions
 
 
-# Module-level holders for query functions — populated by setup().
-search_documents = None
-search_images = None
-search_video_frames = None
-search_video_transcripts = None
-search_chat_history = None
-get_recent_chat_history = None
-
 _initialized = False
 
 
@@ -44,11 +38,11 @@ def setup():
     """Create (or reconnect to) the full Pixeltable schema.
 
     Safe to call multiple times — everything uses ``if_exists="ignore"``.
-    Sets module-level ``@pxt.query`` references used by routers and pxt_serve.
+    Agent-internal ``@pxt.query`` functions are defined here (they feed
+    computed columns). Router-facing queries are defined at module level
+    after this function runs.
     """
     global _initialized
-    global search_documents, search_images, search_video_frames
-    global search_video_transcripts, search_chat_history, get_recent_chat_history
 
     if _initialized:
         return
@@ -111,8 +105,6 @@ def setup():
             .limit(20)
         )
 
-    search_documents = _search_documents
-
     # ── 2. Image Pipeline ────────────────────────────────────────────────
 
     images = pxt.create_table(
@@ -154,8 +146,6 @@ def setup():
             )
             .limit(5)
         )
-
-    search_images = _search_images
 
     # ── 3. Video Pipeline ────────────────────────────────────────────────
 
@@ -208,8 +198,6 @@ def setup():
             .limit(5)
         )
 
-    search_video_frames = _search_video_frames
-
     # 3b. Audio extraction -> transcription -> sentence splitting -> embedding
     videos.add_computed_column(
         audio=extract_audio(videos.video, format="mp3"),
@@ -259,8 +247,6 @@ def setup():
             .limit(20)
         )
 
-    search_video_transcripts = _search_video_transcripts
-
     # ── 4. Chat History ──────────────────────────────────────────────────
 
     chat_history = pxt.create_table(
@@ -292,8 +278,6 @@ def setup():
             .limit(limit)
         )
 
-    get_recent_chat_history = _get_recent_chat_history
-
     @pxt.query
     def _search_chat_history(query_text: str):
         sim = chat_history.content.similarity(string=query_text)
@@ -303,8 +287,6 @@ def setup():
             .select(role=chat_history.role, content=chat_history.content, sim=sim)
             .limit(10)
         )
-
-    search_chat_history = _search_chat_history
 
     # ── 5. Agent Pipeline (tool-calling workflow) ────────────────────────
 
@@ -326,7 +308,6 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 1: Initial LLM call with tools
     agent.add_computed_column(
         initial_response=messages(
             model=config.CLAUDE_MODEL_ID,
@@ -342,13 +323,11 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 2: Tool execution
     agent.add_computed_column(
         tool_output=invoke_tools(tools, agent.initial_response),
         if_exists="ignore",
     )
 
-    # Step 3: Context retrieval (RAG)
     agent.add_computed_column(
         doc_context=_search_documents(agent.prompt),
         if_exists="ignore",
@@ -366,13 +345,11 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 4: Recent chat history
     agent.add_computed_column(
         history_context=_get_recent_chat_history(),
         if_exists="ignore",
     )
 
-    # Step 5: Assemble context
     agent.add_computed_column(
         multimodal_context=functions.assemble_context(
             agent.prompt,
@@ -383,7 +360,6 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 6: Assemble final messages
     agent.add_computed_column(
         final_messages=functions.assemble_final_messages(
             agent.history_context,
@@ -394,7 +370,6 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 7: Final LLM call
     agent.add_computed_column(
         final_response=messages(
             model=config.CLAUDE_MODEL_ID,
@@ -408,7 +383,6 @@ def setup():
         if_exists="ignore",
     )
 
-    # Step 8: Extract answer text
     agent.add_computed_column(
         answer=agent.final_response.content[0].text,
         if_exists="ignore",
@@ -418,9 +392,135 @@ def setup():
     print("\nSchema setup complete.")
 
 
-# Always run setup on import — the _initialized guard makes it safe to
-# call multiple times. This is required for:
-# 1. `python setup_pixeltable.py` (standalone CLI)
-# 2. `pxt serve ... --config service.toml` (TOML modules = ["setup_pixeltable"])
-# 3. `main.py` lifespan hook and `pxt_serve.py` both calling setup()
+# ── Run setup, then define router-facing queries at module level ──────────
+# setup() must complete first so tables exist when @pxt.query evaluates.
 setup()
+
+# Table references for query functions below
+_documents = pxt.get_table(f"{config.APP_NAMESPACE}.documents")
+_chunks = pxt.get_table(f"{config.APP_NAMESPACE}.chunks")
+_images = pxt.get_table(f"{config.APP_NAMESPACE}.images")
+_videos = pxt.get_table(f"{config.APP_NAMESPACE}.videos")
+_video_frames = pxt.get_table(f"{config.APP_NAMESPACE}.video_frames")
+_video_sentences = pxt.get_table(f"{config.APP_NAMESPACE}.video_sentences")
+_chat_history = pxt.get_table(f"{config.APP_NAMESPACE}.chat_history")
+
+
+# ── Data: detail queries ─────────────────────────────────────────────────
+
+@pxt.query
+def get_document_chunks(file_uuid: _uuid.UUID):
+    return (
+        _chunks.where(_chunks.uuid == file_uuid)
+        .select(text=_chunks.text, title=_chunks.title, heading=_chunks.heading, page=_chunks.page)
+    )
+
+
+@pxt.query
+def get_video_frames(file_uuid: _uuid.UUID, limit: int = 12):
+    return (
+        _video_frames.where(_video_frames.uuid == file_uuid)
+        .select(frame=_video_frames.frame_thumbnail, position=_video_frames.pos)
+        .limit(limit)
+    )
+
+
+@pxt.query
+def get_video_sentences(file_uuid: _uuid.UUID):
+    return (
+        _video_sentences.where(_video_sentences.uuid == file_uuid)
+        .select(text=_video_sentences.text)
+    )
+
+
+# ── Data: list queries ───────────────────────────────────────────────────
+
+@pxt.query
+def list_documents():
+    return (
+        _documents.select(uuid=_documents.uuid, name=_documents.document, timestamp=_documents.timestamp)
+        .order_by(_documents.timestamp, asc=False)
+    )
+
+
+@pxt.query
+def list_images():
+    return (
+        _images.select(uuid=_images.uuid, name=_images.image, thumbnail=_images.thumbnail, timestamp=_images.timestamp)
+        .order_by(_images.timestamp, asc=False)
+    )
+
+
+@pxt.query
+def list_videos():
+    return (
+        _videos.select(uuid=_videos.uuid, name=_videos.video, timestamp=_videos.timestamp)
+        .order_by(_videos.timestamp, asc=False)
+    )
+
+
+# ── Search: similarity queries ───────────────────────────────────────────
+
+@pxt.query
+def search_documents_api(query_text: str):
+    sim = _chunks.text.similarity(string=query_text)
+    return (
+        _chunks.where(sim > 0.3)
+        .order_by(sim, asc=False)
+        .select(text=_chunks.text, uuid=_chunks.uuid, sim=sim, title=_chunks.title, source=_chunks.document)
+        .limit(20)
+    )
+
+
+@pxt.query
+def search_images_api(query_text: str):
+    sim = _images.image.similarity(string=query_text)
+    return (
+        _images.where(sim > 0.2)
+        .order_by(sim, asc=False)
+        .select(uuid=_images.uuid, sim=sim, thumbnail=_images.thumbnail, source=_images.image)
+        .limit(20)
+    )
+
+
+@pxt.query
+def search_video_frames_api(query_text: str):
+    sim = _video_frames.frame.similarity(string=query_text)
+    return (
+        _video_frames.where(sim > 0.2)
+        .order_by(sim, asc=False)
+        .select(uuid=_video_frames.uuid, sim=sim, thumbnail=_video_frames.frame_thumbnail, source=_video_frames.video)
+        .limit(20)
+    )
+
+
+@pxt.query
+def search_transcripts_api(query_text: str):
+    sim = _video_sentences.text.similarity(string=query_text)
+    return (
+        _video_sentences.where(sim > 0.3)
+        .order_by(sim, asc=False)
+        .select(text=_video_sentences.text, uuid=_video_sentences.uuid, sim=sim, source=_video_sentences.video)
+        .limit(60)
+    )
+
+
+# ── Chat: conversation queries ───────────────────────────────────────────
+
+@pxt.query
+def get_conversation_messages(conversation_id: str):
+    return (
+        _chat_history.where(_chat_history.conversation_id == conversation_id)
+        .select(role=_chat_history.role, content=_chat_history.content, timestamp=_chat_history.timestamp)
+        .order_by(_chat_history.timestamp, asc=True)
+    )
+
+
+@pxt.query
+def list_all_messages():
+    return (
+        _chat_history.select(
+            role=_chat_history.role, content=_chat_history.content,
+            conversation_id=_chat_history.conversation_id, timestamp=_chat_history.timestamp,
+        ).order_by(_chat_history.timestamp, asc=True)
+    )

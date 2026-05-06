@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -13,33 +12,13 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
-logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Schema auto-initializes when setup_pixeltable is imported (see
-    # pxt_serve.py). The _initialized guard makes repeat calls safe.
-    import setup_pixeltable
-    if setup_pixeltable._initialized:
-        logger.info("Pixeltable schema ready")
-    else:
-        logger.warning(
-            "Pixeltable schema not initialized. "
-            "Run 'python setup_pixeltable.py' first."
-        )
-    yield
-
 
 app = FastAPI(
     title="Pixeltable Starter Kit",
     description="Full-stack multimodal AI starter app powered by Pixeltable",
     version="1.0.0",
-    lifespan=lifespan,
 )
 
-# No cookies / Authorization headers are used, so allow_credentials stays False.
-# This keeps CORS_ORIGINS="*" fully spec-compliant (browsers reject `*` + credentials).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.CORS_ORIGINS,
@@ -51,19 +30,6 @@ app.add_middleware(
 app.include_router(data.router)
 app.include_router(search.router)
 app.include_router(agent.router)
-
-# Pixeltable-native declarative routes (v0.6+).
-# Exposes the same tables/queries as the facade routers above, but via
-# Pixeltable's FastAPIRouter for scripts, admin, and direct API access.
-try:
-    from pxt_serve import build_pxt_router
-    app.include_router(build_pxt_router())
-    logger.info("Pixeltable FastAPIRouter mounted at /api/pxt")
-except Exception:
-    logger.warning(
-        "Could not mount Pixeltable FastAPIRouter. "
-        "Ensure 'python setup_pixeltable.py' has been run."
-    )
 
 
 @app.get("/api/health")

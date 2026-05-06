@@ -36,7 +36,7 @@ graph TD
     AP -.->|"@pxt.query"| EI
 ```
 
-2. **[Ephemeral Orchestration](orchestration/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest text and media, let computed columns process everything, [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql) structured results to a serving DB, and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/v0.5.9/table) parameter on `add_computed_column`. No persistent infrastructure — the container shuts down when done.
+2. **[Ephemeral Orchestration](orchestration/)** — Pixeltable as **ephemeral processing engine**: spin up, ingest text and media, let computed columns process everything, [`export_sql`](https://docs.pixeltable.com/howto/cookbooks/data/data-export-sql) structured results to a serving DB, and route generated media (thumbnails, audio, etc.) directly to a cloud bucket via the [`destination`](https://docs.pixeltable.com/sdk/latest/table) parameter on `add_computed_column`. No persistent infrastructure — the container shuts down when done.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#0f172a', 'primaryBorderColor': '#334155', 'lineColor': '#ffffff', 'arrowheadColor': '#ffffff', 'secondaryColor': '#f8fafc', 'tertiaryColor': '#f1f5f9', 'clusterBkg': '#f8fafc', 'clusterBorder': '#94a3b8', 'fontSize': '14px'}}}%%
@@ -168,24 +168,22 @@ See [Pixeltable Configuration](https://docs.pixeltable.com/platform/configuratio
 
 ```
 backend/
-├── main.py                 FastAPI app, CORS, routers, SPA fallback
+├── main.py                 FastAPI app, CORS, router init, SPA fallback
 ├── config.py               Model IDs, system prompts, env overrides
-├── models.py               Pydantic models (row schemas + API responses)
+├── models.py               Pydantic models (agent endpoint only)
 ├── functions.py            @pxt.udf definitions (web search, context assembly)
 ├── setup_pixeltable.py     Schema + @pxt.query (tables, views, indexes, agent pipeline)
-├── pxt_serve.py            Pixeltable FastAPIRouter (v0.6+): declarative /api/pxt routes
-├── service.toml            TOML alternative for `pxt serve` CLI (standalone serving)
 ├── pyproject.toml          Dependencies (uv sync)
 └── routers/
-    ├── data.py             Upload, list, delete, chunks, frames, transcription
-    ├── search.py           Cross-modal similarity search
-    └── agent.py            Tool-calling agent + conversations
+    ├── data.py             100% declarative FastAPIRouter (upload w/ background jobs, list, delete, detail queries)
+    ├── search.py           100% declarative FastAPIRouter (4 similarity search endpoints)
+    └── agent.py            FastAPIRouter (3 declarative + 1 hand-written agent query)
 
 frontend/src/
 ├── App.tsx                 Tab navigation (Data / Search / Agent)
 ├── components/             Page components + shared UI (Button, Badge)
-├── lib/api.ts              Typed fetch wrapper
-└── types/index.ts          Shared interfaces
+├── lib/api.ts              Typed fetch wrapper + client-side aggregation/fan-in
+└── types/index.ts          Shared interfaces (PxtQueryResponse<T> for generic query responses)
 
 orchestration/                  Ephemeral orchestration deployment pattern
 ├── pipeline.py                 Batch processing script (ingest → compute → export_sql)
@@ -213,7 +211,10 @@ Pixeltable is designed to work well with AI coding assistants. See [Building wit
 - **[MCP Server](https://github.com/pixeltable/mcp-server-pixeltable-developer)** — interactive Pixeltable exploration (tables, queries, Python REPL)
 - **[Claude Code Skill](https://github.com/pixeltable/pixeltable-skill)** — deep Pixeltable expertise for Claude
 - **[AGENTS.md](AGENTS.md)** — architecture guide for AI agents working with this codebase
-- **[`docs/MIGRATION_PXTFASTAPIROUTER.md`](docs/MIGRATION_PXTFASTAPIROUTER.md)** — notes on `pixeltable.serve.PxtFastAPIRouter` (PR #1268): what it replaces, where facades must stay, and a reference `/api/pxt` client
+
+## Standalone Serving with `pxt serve`
+
+If you don't need a custom FastAPI app, Pixeltable can serve tables and queries directly from a TOML config file or the CLI — no Python code required. See the [Serving docs](https://docs.pixeltable.com/howto/deployment/serving) for details.
 
 ## Learn More
 

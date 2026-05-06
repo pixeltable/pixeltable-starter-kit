@@ -41,15 +41,8 @@ export interface FilesResponse {
 export interface ChunkItem {
   text: string
   title?: string
-  // Pixeltable's DocumentSplitter returns heading as a map, e.g. { h1: "...", h2: "..." }
   heading?: Record<string, string>
   page?: number
-}
-
-export interface ChunksResponse {
-  uuid: string
-  chunks: ChunkItem[]
-  total: number
 }
 
 export interface FrameItem {
@@ -57,16 +50,9 @@ export interface FrameItem {
   position: number
 }
 
-export interface FramesResponse {
-  uuid: string
-  frames: FrameItem[]
-  total: number
-}
-
-export interface TranscriptionResponse {
-  uuid: string
-  sentences: string[]
-  full_text: string
+/** Generic response shape from Pixeltable add_query_route endpoints. */
+export interface PxtQueryResponse<T> {
+  rows: T[]
 }
 
 export interface SearchResult {

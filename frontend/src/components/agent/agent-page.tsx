@@ -80,7 +80,7 @@ export function AgentPage() {
   const loadConversation = async (id: string) => {
     try {
       const data = await api.getConversation(id)
-      flushSync(() => setMessages(data.messages))
+      flushSync(() => setMessages(data.rows))
       scrollToBottom()
       setConversationId(id)
       setShowHistory(false)

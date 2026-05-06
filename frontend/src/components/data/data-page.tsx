@@ -20,6 +20,7 @@ export function DataPage() {
     videos: FileItem[]
   }>({ documents: [], images: [], videos: [] })
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
   const [expandedUuid, setExpandedUuid] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,13 +38,19 @@ export function DataPage() {
     setIsUploading(true)
     try {
       for (const file of Array.from(fileList)) {
-        await api.uploadFile(file)
+        setUploadStatus(`Uploading ${file.name}…`)
+        const result = await api.uploadFile(file)
+        if (result.jobPath) {
+          setUploadStatus(`Processing ${file.name}…`)
+          await api.pollJob(result.jobPath)
+        }
       }
       await loadFiles()
     } catch (err) {
       console.error('Upload failed:', err)
     } finally {
       setIsUploading(false)
+      setUploadStatus('')
     }
   }
 
@@ -83,7 +90,7 @@ export function DataPage() {
         {isUploading ? (
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Uploading...
+            {uploadStatus || 'Uploading…'}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1 text-muted-foreground">
@@ -211,7 +218,7 @@ function DocumentDetail({ uuid }: { uuid: string }) {
   useMountEffect(() => {
     setIsLoading(true)
     api.getChunks(uuid)
-      .then(data => setChunks(data.chunks))
+      .then(data => setChunks(data.rows))
       .catch(() => {})
       .finally(() => setIsLoading(false))
   })
@@ -278,11 +285,19 @@ function VideoDetail({ uuid }: { uuid: string }) {
   useMountEffect(() => {
     setIsLoading(true)
     Promise.all([
-      api.getFrames(uuid).catch(() => ({ frames: [] })),
-      api.getTranscription(uuid).catch(() => ({ full_text: '' })),
+      api.getFrames(uuid).catch(() => ({ rows: [] })),
+      api.getTranscription(uuid).catch(() => ({ rows: [] })),
     ]).then(([f, t]) => {
-      setFrames('frames' in f ? f.frames : [])
-      setTranscription('full_text' in t ? t.full_text : '')
+      setFrames(f.rows ?? [])
+      const seen = new Set<string>()
+      const texts: string[] = []
+      for (const row of t.rows ?? []) {
+        if (row.text && !seen.has(row.text)) {
+          seen.add(row.text)
+          texts.push(row.text)
+        }
+      }
+      setTranscription(texts.join(' '))
     }).finally(() => setIsLoading(false))
   })
 
