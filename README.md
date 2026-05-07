@@ -172,12 +172,12 @@ backend/
 ├── config.py               Model IDs, system prompts, env overrides
 ├── models.py               Pydantic models (agent endpoint only)
 ├── functions.py            @pxt.udf definitions (web search, context assembly)
-├── setup_pixeltable.py     Schema + @pxt.query (tables, views, indexes, agent pipeline)
+├── setup_pixeltable.py     Schema (tables, views, indexes, agent pipeline — no router queries)
 ├── pyproject.toml          Dependencies (uv sync)
 └── routers/
-    ├── data.py             100% declarative FastAPIRouter (upload w/ background jobs, list, delete, detail queries)
-    ├── search.py           100% declarative FastAPIRouter (4 similarity search endpoints)
-    └── agent.py            FastAPIRouter (3 declarative + 1 hand-written agent query)
+    ├── data.py             FastAPIRouter + @pxt.query (upload, list, delete, detail queries)
+    ├── search.py           FastAPIRouter + @pxt.query (4 similarity search endpoints)
+    └── agent.py            FastAPIRouter + @pxt.query (3 declarative + 1 hand-written agent query)
 
 frontend/src/
 ├── App.tsx                 Tab navigation (Data / Search / Agent)

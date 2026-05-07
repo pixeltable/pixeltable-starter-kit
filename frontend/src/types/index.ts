@@ -50,7 +50,6 @@ export interface FrameItem {
   position: number
 }
 
-/** Generic response shape from Pixeltable add_query_route endpoints. */
 export interface PxtQueryResponse<T> {
   rows: T[]
 }

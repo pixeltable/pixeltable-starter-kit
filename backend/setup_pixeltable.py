@@ -1,25 +1,12 @@
-"""Schema definition for the Pixeltable Starter Kit.
+"""Pixeltable schema definition — runs on first import, idempotent.
 
-Run once to initialize the database schema:
-    python setup_pixeltable.py
-
-The default run is idempotent: `create_dir` + every `create_table`,
-`create_view`, `add_computed_column`, and `add_embedding_index` call uses
-`if_exists="ignore"`, so re-running never destroys data.
-
-To wipe and recreate the 'app' namespace from scratch:
-    RESET_SCHEMA=true python setup_pixeltable.py
+    python setup_pixeltable.py              # CLI init
+    RESET_SCHEMA=true python setup_pixeltable.py  # wipe + recreate
 """
-
 import os
-import uuid as _uuid
 
-import config
 import pixeltable as pxt
-
-from pixeltable.functions import image as pxt_image
-from pixeltable.functions import openai
-from pixeltable.functions import string as pxt_str
+from pixeltable.functions import image as pxt_image, openai, string as pxt_str
 from pixeltable.functions.anthropic import invoke_tools, messages
 from pixeltable.functions.audio import audio_splitter
 from pixeltable.functions.document import document_splitter
@@ -28,499 +15,199 @@ from pixeltable.functions.string import string_splitter
 from pixeltable.functions.uuid import uuid7
 from pixeltable.functions.video import extract_audio, frame_iterator
 
+import config
 import functions
 
+if os.getenv("RESET_SCHEMA", "false").lower() == "true":
+    pxt.drop_dir(config.APP_NAMESPACE, force=True)
 
-_initialized = False
+pxt.create_dir(config.APP_NAMESPACE, if_exists="ignore")
+ns = config.APP_NAMESPACE
 
+sentence_embed = sentence_transformer.using(model_id=config.EMBEDDING_MODEL_ID)
+clip_embed = clip.using(model_id=config.CLIP_MODEL_ID)
 
-def setup():
-    """Create (or reconnect to) the full Pixeltable schema.
-
-    Safe to call multiple times — everything uses ``if_exists="ignore"``.
-    Agent-internal ``@pxt.query`` functions are defined here (they feed
-    computed columns). Router-facing queries are defined at module level
-    after this function runs.
-    """
-    global _initialized
-
-    if _initialized:
-        return
-    _initialized = True
-
-    if os.getenv("RESET_SCHEMA", "false").lower() == "true":
-        pxt.drop_dir(config.APP_NAMESPACE, force=True)
-
-    pxt.create_dir(config.APP_NAMESPACE, if_exists="ignore")
-
-    # ── 1. Document Pipeline ─────────────────────────────────────────────
-
-    documents = pxt.create_table(
-        f"{config.APP_NAMESPACE}.documents",
-        {
-            "document": pxt.Document,
-            "uuid": uuid7(),
-            "timestamp": pxt.Timestamp,
-        },
-        primary_key=["uuid"],
-        if_exists="ignore",
-    )
-
-    chunks = pxt.create_view(
-        f"{config.APP_NAMESPACE}.chunks",
-        documents,
-        iterator=document_splitter(
-            document=documents.document,
-            separators="page, sentence",
-            metadata="title, heading, page",
-        ),
-        if_exists="ignore",
-    )
-
-    sentence_embed = sentence_transformer.using(model_id=config.EMBEDDING_MODEL_ID)
-
-    chunks.add_embedding_index(
-        "text",
-        idx_name="chunks_text_embed",
-        string_embed=sentence_embed,
-        if_exists="ignore",
-    )
-
-    print("  Documents: table + chunks view + embedding index")
-
-    @pxt.query
-    def _search_documents(query_text: str):
-        sim = chunks.text.similarity(string=query_text)
-        return (
-            chunks.where((sim > 0.5) & (pxt_str.len(chunks.text) > 30))
-            .order_by(sim, asc=False)
-            .select(
-                chunks.text,
-                source_doc=chunks.document,
-                sim=sim,
-                title=chunks.title,
-                heading=chunks.heading,
-                page_number=chunks.page,
-            )
-            .limit(20)
-        )
-
-    # ── 2. Image Pipeline ────────────────────────────────────────────────
-
-    images = pxt.create_table(
-        f"{config.APP_NAMESPACE}.images",
-        {
-            "image": pxt.Image,
-            "uuid": uuid7(),
-            "timestamp": pxt.Timestamp,
-        },
-        primary_key=["uuid"],
-        if_exists="ignore",
-    )
-
-    images.add_computed_column(
-        thumbnail=pxt_image.b64_encode(pxt_image.thumbnail(images.image, size=(320, 320))),
-        if_exists="ignore",
-    )
-
-    images.add_embedding_index(
-        "image",
-        idx_name="images_clip_embed",
-        embedding=clip.using(model_id=config.CLIP_MODEL_ID),
-        if_exists="ignore",
-    )
-
-    print("  Images: table + thumbnail computed column + CLIP embedding index")
-
-    @pxt.query
-    def _search_images(query_text: str):
-        sim = images.image.similarity(string=query_text)
-        return (
-            images.where(sim > 0.25)
-            .order_by(sim, asc=False)
-            .select(
-                encoded_image=pxt_image.b64_encode(
-                    pxt_image.thumbnail(images.image, size=(224, 224)), "png"
-                ),
-                sim=sim,
-            )
-            .limit(5)
-        )
-
-    # ── 3. Video Pipeline ────────────────────────────────────────────────
-
-    videos = pxt.create_table(
-        f"{config.APP_NAMESPACE}.videos",
-        {
-            "video": pxt.Video,
-            "uuid": uuid7(),
-            "timestamp": pxt.Timestamp,
-        },
-        primary_key=["uuid"],
-        if_exists="ignore",
-    )
-
-    # 3a. Keyframe extraction + CLIP embedding
-    video_frames = pxt.create_view(
-        f"{config.APP_NAMESPACE}.video_frames",
-        videos,
-        iterator=frame_iterator(video=videos.video, keyframes_only=True),
-        if_exists="ignore",
-    )
-
-    video_frames.add_computed_column(
-        frame_thumbnail=pxt_image.b64_encode(
-            pxt_image.thumbnail(video_frames.frame, size=(320, 320))
-        ),
-        if_exists="ignore",
-    )
-
-    video_frames.add_embedding_index(
-        column="frame",
-        idx_name="frames_clip_embed",
-        embedding=clip.using(model_id=config.CLIP_MODEL_ID),
-        if_exists="ignore",
-    )
-
-    print("  Videos: keyframes view + CLIP embedding index")
-
-    @pxt.query
-    def _search_video_frames(query_text: str):
-        sim = video_frames.frame.similarity(string=query_text)
-        return (
-            video_frames.where(sim > 0.25)
-            .order_by(sim, asc=False)
-            .select(
-                encoded_frame=pxt_image.b64_encode(video_frames.frame, "png"),
-                source_video=video_frames.video,
-                sim=sim,
-            )
-            .limit(5)
-        )
-
-    # 3b. Audio extraction -> transcription -> sentence splitting -> embedding
-    videos.add_computed_column(
-        audio=extract_audio(videos.video, format="mp3"),
-        if_exists="ignore",
-    )
-
-    video_audio_chunks = pxt.create_view(
-        f"{config.APP_NAMESPACE}.video_audio_chunks",
-        videos,
-        iterator=audio_splitter(audio=videos.audio, duration=30.0),
-        if_exists="ignore",
-    )
-
-    video_audio_chunks.add_computed_column(
-        transcription=openai.transcriptions(
-            audio=video_audio_chunks.audio_segment, model=config.WHISPER_MODEL_ID
-        ),
-        if_exists="ignore",
-    )
-
-    video_sentences = pxt.create_view(
-        f"{config.APP_NAMESPACE}.video_sentences",
-        video_audio_chunks.where(video_audio_chunks.transcription != None),
-        iterator=string_splitter(
-            text=video_audio_chunks.transcription.text, separators="sentence"
-        ),
-        if_exists="ignore",
-    )
-
-    video_sentences.add_embedding_index(
-        column="text",
-        idx_name="sentences_text_embed",
-        string_embed=sentence_embed,
-        if_exists="ignore",
-    )
-
-    print("  Videos: audio extraction -> Whisper transcription -> sentence embedding")
-
-    @pxt.query
-    def _search_video_transcripts(query_text: str):
-        """Search video transcripts by semantic similarity."""
-        sim = video_sentences.text.similarity(string=query_text)
-        return (
-            video_sentences.where(sim > 0.7)
-            .order_by(sim, asc=False)
-            .select(video_sentences.text, source_video=video_sentences.video, sim=sim)
-            .limit(20)
-        )
-
-    # ── 4. Chat History ──────────────────────────────────────────────────
-
-    chat_history = pxt.create_table(
-        f"{config.APP_NAMESPACE}.chat_history",
-        {
-            "role": pxt.String,
-            "content": pxt.String,
-            "conversation_id": pxt.String,
-            "timestamp": pxt.Timestamp,
-        },
-        if_exists="ignore",
-    )
-
-    chat_history.add_embedding_index(
-        column="content",
-        idx_name="chat_content_embed",
-        string_embed=sentence_embed,
-        if_exists="ignore",
-    )
-
-    print("  Chat history: table + embedding index")
-
-    @pxt.query
-    def _get_recent_chat_history(limit: int = 4):
-        return (
-            chat_history
-            .order_by(chat_history.timestamp, asc=False)
-            .select(role=chat_history.role, content=chat_history.content)
-            .limit(limit)
-        )
-
-    @pxt.query
-    def _search_chat_history(query_text: str):
-        sim = chat_history.content.similarity(string=query_text)
-        return (
-            chat_history.where(sim > 0.8)
-            .order_by(sim, asc=False)
-            .select(role=chat_history.role, content=chat_history.content, sim=sim)
-            .limit(10)
-        )
-
-    # ── 5. Agent Pipeline (tool-calling workflow) ────────────────────────
-
-    tools = pxt.tools(
-        functions.web_search,
-        _search_video_transcripts,
-    )
-
-    agent = pxt.create_table(
-        f"{config.APP_NAMESPACE}.agent",
-        {
-            "prompt": pxt.String,
-            "timestamp": pxt.Timestamp,
-            "initial_system_prompt": pxt.String,
-            "final_system_prompt": pxt.String,
-            "max_tokens": pxt.Int,
-            "temperature": pxt.Float,
-        },
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        initial_response=messages(
-            model=config.CLAUDE_MODEL_ID,
-            messages=[{"role": "user", "content": agent.prompt}],
-            tools=tools,
-            tool_choice=tools.choice(required=True),
-            max_tokens=agent.max_tokens,
-            model_kwargs={
-                "system": agent.initial_system_prompt,
-                "temperature": agent.temperature,
-            },
-        ),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        tool_output=invoke_tools(tools, agent.initial_response),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        doc_context=_search_documents(agent.prompt),
-        if_exists="ignore",
-    )
-    agent.add_computed_column(
-        image_context=_search_images(agent.prompt),
-        if_exists="ignore",
-    )
-    agent.add_computed_column(
-        video_frame_context=_search_video_frames(agent.prompt),
-        if_exists="ignore",
-    )
-    agent.add_computed_column(
-        chat_memory_context=_search_chat_history(agent.prompt),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        history_context=_get_recent_chat_history(),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        multimodal_context=functions.assemble_context(
-            agent.prompt,
-            agent.tool_output,
-            agent.doc_context,
-            agent.chat_memory_context,
-        ),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        final_messages=functions.assemble_final_messages(
-            agent.history_context,
-            agent.multimodal_context,
-            image_context=agent.image_context,
-            video_frame_context=agent.video_frame_context,
-        ),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        final_response=messages(
-            model=config.CLAUDE_MODEL_ID,
-            messages=agent.final_messages,
-            max_tokens=agent.max_tokens,
-            model_kwargs={
-                "system": agent.final_system_prompt,
-                "temperature": agent.temperature,
-            },
-        ),
-        if_exists="ignore",
-    )
-
-    agent.add_computed_column(
-        answer=agent.final_response.content[0].text,
-        if_exists="ignore",
-    )
-
-    print("  Agent: 8-step tool-calling pipeline")
-    print("\nSchema setup complete.")
-
-
-# ── Run setup, then define router-facing queries at module level ──────────
-# setup() must complete first so tables exist when @pxt.query evaluates.
-setup()
-
-# Table references for query functions below
-_documents = pxt.get_table(f"{config.APP_NAMESPACE}.documents")
-_chunks = pxt.get_table(f"{config.APP_NAMESPACE}.chunks")
-_images = pxt.get_table(f"{config.APP_NAMESPACE}.images")
-_videos = pxt.get_table(f"{config.APP_NAMESPACE}.videos")
-_video_frames = pxt.get_table(f"{config.APP_NAMESPACE}.video_frames")
-_video_sentences = pxt.get_table(f"{config.APP_NAMESPACE}.video_sentences")
-_chat_history = pxt.get_table(f"{config.APP_NAMESPACE}.chat_history")
-
-
-# ── Data: detail queries ─────────────────────────────────────────────────
-
-@pxt.query
-def get_document_chunks(file_uuid: _uuid.UUID):
-    return (
-        _chunks.where(_chunks.uuid == file_uuid)
-        .select(text=_chunks.text, title=_chunks.title, heading=_chunks.heading, page=_chunks.page)
-    )
+# Document pipeline: table → chunks view → embedding index
+documents = pxt.create_table(
+    f"{ns}.documents",
+    {"document": pxt.Document, "uuid": uuid7(), "timestamp": pxt.Timestamp},
+    primary_key=["uuid"],
+    if_exists="ignore",
+)
+chunks = pxt.create_view(
+    f"{ns}.chunks", documents,
+    iterator=document_splitter(document=documents.document, separators="page, sentence", metadata="title, heading, page"),
+    if_exists="ignore",
+)
+chunks.add_embedding_index("text", idx_name="chunks_text_embed", string_embed=sentence_embed, if_exists="ignore")
 
 
 @pxt.query
-def get_video_frames(file_uuid: _uuid.UUID, limit: int = 12):
+def _search_documents(query_text: str):
+    sim = chunks.text.similarity(string=query_text)
     return (
-        _video_frames.where(_video_frames.uuid == file_uuid)
-        .select(frame=_video_frames.frame_thumbnail, position=_video_frames.pos)
+        chunks.where((sim > 0.5) & (pxt_str.len(chunks.text) > 30))
+        .order_by(sim, asc=False)
+        .select(chunks.text, source_doc=chunks.document, sim=sim,
+                title=chunks.title, heading=chunks.heading, page_number=chunks.page)
+        .limit(20)
+    )
+
+
+# Image pipeline: table → thumbnail + CLIP embedding
+images = pxt.create_table(
+    f"{ns}.images",
+    {"image": pxt.Image, "uuid": uuid7(), "timestamp": pxt.Timestamp},
+    primary_key=["uuid"],
+    if_exists="ignore",
+)
+images.add_computed_column(
+    thumbnail=pxt_image.b64_encode(pxt_image.thumbnail(images.image, size=(320, 320))),
+    if_exists="ignore",
+)
+images.add_embedding_index("image", idx_name="images_clip_embed", embedding=clip_embed, if_exists="ignore")
+
+
+@pxt.query
+def _search_images(query_text: str):
+    sim = images.image.similarity(string=query_text)
+    return (
+        images.where(sim > 0.25).order_by(sim, asc=False)
+        .select(encoded_image=pxt_image.b64_encode(pxt_image.thumbnail(images.image, size=(224, 224)), "png"), sim=sim)
+        .limit(5)
+    )
+
+
+# Video pipeline: keyframes + CLIP, audio → Whisper → sentence embedding
+videos = pxt.create_table(
+    f"{ns}.videos",
+    {"video": pxt.Video, "uuid": uuid7(), "timestamp": pxt.Timestamp},
+    primary_key=["uuid"],
+    if_exists="ignore",
+)
+video_frames = pxt.create_view(
+    f"{ns}.video_frames", videos,
+    iterator=frame_iterator(video=videos.video, keyframes_only=True),
+    if_exists="ignore",
+)
+video_frames.add_computed_column(
+    frame_thumbnail=pxt_image.b64_encode(pxt_image.thumbnail(video_frames.frame, size=(320, 320))),
+    if_exists="ignore",
+)
+video_frames.add_embedding_index(column="frame", idx_name="frames_clip_embed", embedding=clip_embed, if_exists="ignore")
+
+
+@pxt.query
+def _search_video_frames(query_text: str):
+    sim = video_frames.frame.similarity(string=query_text)
+    return (
+        video_frames.where(sim > 0.25).order_by(sim, asc=False)
+        .select(encoded_frame=pxt_image.b64_encode(video_frames.frame, "png"), source_video=video_frames.video, sim=sim)
+        .limit(5)
+    )
+
+
+videos.add_computed_column(audio=extract_audio(videos.video, format="mp3"), if_exists="ignore")
+video_audio_chunks = pxt.create_view(
+    f"{ns}.video_audio_chunks", videos,
+    iterator=audio_splitter(audio=videos.audio, duration=30.0),
+    if_exists="ignore",
+)
+video_audio_chunks.add_computed_column(
+    transcription=openai.transcriptions(audio=video_audio_chunks.audio_segment, model=config.WHISPER_MODEL_ID),
+    if_exists="ignore",
+)
+video_sentences = pxt.create_view(
+    f"{ns}.video_sentences",
+    video_audio_chunks.where(video_audio_chunks.transcription != None),
+    iterator=string_splitter(text=video_audio_chunks.transcription.text, separators="sentence"),
+    if_exists="ignore",
+)
+video_sentences.add_embedding_index(column="text", idx_name="sentences_text_embed", string_embed=sentence_embed, if_exists="ignore")
+
+
+@pxt.query
+def _search_video_transcripts(query_text: str):
+    """Search video transcripts by semantic similarity."""
+    sim = video_sentences.text.similarity(string=query_text)
+    return (
+        video_sentences.where(sim > 0.7).order_by(sim, asc=False)
+        .select(video_sentences.text, source_video=video_sentences.video, sim=sim)
+        .limit(20)
+    )
+
+
+# Chat history with embedding index
+chat_history = pxt.create_table(
+    f"{ns}.chat_history",
+    {"role": pxt.String, "content": pxt.String, "conversation_id": pxt.String, "timestamp": pxt.Timestamp},
+    if_exists="ignore",
+)
+chat_history.add_embedding_index(column="content", idx_name="chat_content_embed", string_embed=sentence_embed, if_exists="ignore")
+
+
+@pxt.query
+def _get_recent_chat_history(limit: int = 4):
+    return (
+        chat_history.order_by(chat_history.timestamp, asc=False)
+        .select(role=chat_history.role, content=chat_history.content)
         .limit(limit)
     )
 
 
 @pxt.query
-def get_video_sentences(file_uuid: _uuid.UUID):
+def _search_chat_history(query_text: str):
+    sim = chat_history.content.similarity(string=query_text)
     return (
-        _video_sentences.where(_video_sentences.uuid == file_uuid)
-        .select(text=_video_sentences.text)
+        chat_history.where(sim > 0.8).order_by(sim, asc=False)
+        .select(role=chat_history.role, content=chat_history.content, sim=sim)
+        .limit(10)
     )
 
 
-# ── Data: list queries ───────────────────────────────────────────────────
+# Agent pipeline: 8-step tool-calling chain via computed columns
+tools = pxt.tools(functions.web_search, _search_video_transcripts)
 
-@pxt.query
-def list_documents():
-    return (
-        _documents.select(uuid=_documents.uuid, name=_documents.document, timestamp=_documents.timestamp)
-        .order_by(_documents.timestamp, asc=False)
-    )
+agent = pxt.create_table(
+    f"{ns}.agent",
+    {"prompt": pxt.String, "timestamp": pxt.Timestamp, "initial_system_prompt": pxt.String,
+     "final_system_prompt": pxt.String, "max_tokens": pxt.Int, "temperature": pxt.Float},
+    if_exists="ignore",
+)
+agent.add_computed_column(
+    initial_response=messages(
+        model=config.CLAUDE_MODEL_ID,
+        messages=[{"role": "user", "content": agent.prompt}],
+        tools=tools, tool_choice=tools.choice(required=True), max_tokens=agent.max_tokens,
+        model_kwargs={"system": agent.initial_system_prompt, "temperature": agent.temperature},
+    ),
+    if_exists="ignore",
+)
+agent.add_computed_column(tool_output=invoke_tools(tools, agent.initial_response), if_exists="ignore")
+agent.add_computed_column(doc_context=_search_documents(agent.prompt), if_exists="ignore")
+agent.add_computed_column(image_context=_search_images(agent.prompt), if_exists="ignore")
+agent.add_computed_column(video_frame_context=_search_video_frames(agent.prompt), if_exists="ignore")
+agent.add_computed_column(chat_memory_context=_search_chat_history(agent.prompt), if_exists="ignore")
+agent.add_computed_column(history_context=_get_recent_chat_history(), if_exists="ignore")
+agent.add_computed_column(
+    multimodal_context=functions.assemble_context(
+        agent.prompt, agent.tool_output, agent.doc_context, agent.chat_memory_context),
+    if_exists="ignore",
+)
+agent.add_computed_column(
+    final_messages=functions.assemble_final_messages(
+        agent.history_context, agent.multimodal_context,
+        image_context=agent.image_context, video_frame_context=agent.video_frame_context),
+    if_exists="ignore",
+)
+agent.add_computed_column(
+    final_response=messages(
+        model=config.CLAUDE_MODEL_ID, messages=agent.final_messages, max_tokens=agent.max_tokens,
+        model_kwargs={"system": agent.final_system_prompt, "temperature": agent.temperature},
+    ),
+    if_exists="ignore",
+)
+agent.add_computed_column(answer=agent.final_response.content[0].text, if_exists="ignore")
 
-
-@pxt.query
-def list_images():
-    return (
-        _images.select(uuid=_images.uuid, name=_images.image, thumbnail=_images.thumbnail, timestamp=_images.timestamp)
-        .order_by(_images.timestamp, asc=False)
-    )
-
-
-@pxt.query
-def list_videos():
-    return (
-        _videos.select(uuid=_videos.uuid, name=_videos.video, timestamp=_videos.timestamp)
-        .order_by(_videos.timestamp, asc=False)
-    )
-
-
-# ── Search: similarity queries ───────────────────────────────────────────
-
-@pxt.query
-def search_documents_api(query_text: str):
-    sim = _chunks.text.similarity(string=query_text)
-    return (
-        _chunks.where(sim > 0.3)
-        .order_by(sim, asc=False)
-        .select(text=_chunks.text, uuid=_chunks.uuid, sim=sim, title=_chunks.title, source=_chunks.document)
-        .limit(20)
-    )
-
-
-@pxt.query
-def search_images_api(query_text: str):
-    sim = _images.image.similarity(string=query_text)
-    return (
-        _images.where(sim > 0.2)
-        .order_by(sim, asc=False)
-        .select(uuid=_images.uuid, sim=sim, thumbnail=_images.thumbnail, source=_images.image)
-        .limit(20)
-    )
-
-
-@pxt.query
-def search_video_frames_api(query_text: str):
-    sim = _video_frames.frame.similarity(string=query_text)
-    return (
-        _video_frames.where(sim > 0.2)
-        .order_by(sim, asc=False)
-        .select(uuid=_video_frames.uuid, sim=sim, thumbnail=_video_frames.frame_thumbnail, source=_video_frames.video)
-        .limit(20)
-    )
-
-
-@pxt.query
-def search_transcripts_api(query_text: str):
-    sim = _video_sentences.text.similarity(string=query_text)
-    return (
-        _video_sentences.where(sim > 0.3)
-        .order_by(sim, asc=False)
-        .select(text=_video_sentences.text, uuid=_video_sentences.uuid, sim=sim, source=_video_sentences.video)
-        .limit(60)
-    )
-
-
-# ── Chat: conversation queries ───────────────────────────────────────────
-
-@pxt.query
-def get_conversation_messages(conversation_id: str):
-    return (
-        _chat_history.where(_chat_history.conversation_id == conversation_id)
-        .select(role=_chat_history.role, content=_chat_history.content, timestamp=_chat_history.timestamp)
-        .order_by(_chat_history.timestamp, asc=True)
-    )
-
-
-@pxt.query
-def list_all_messages():
-    return (
-        _chat_history.select(
-            role=_chat_history.role, content=_chat_history.content,
-            conversation_id=_chat_history.conversation_id, timestamp=_chat_history.timestamp,
-        ).order_by(_chat_history.timestamp, asc=True)
-    )
+if __name__ == "__main__":
+    print("Schema setup complete.")
