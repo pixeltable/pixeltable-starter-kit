@@ -8,23 +8,25 @@ Apps are one Python file (`app.py`): `TableModel` classes and a `FastAPIRouter`.
 The loop is Declare, Experiment, Serve: apply with `pxt schema update`, serve with `pxt service update`, then insert / `/ask` / `pxt dashboard`.
 Every example here uses `uv run pxt`, which works whether or not `.venv` is on PATH.
 Export API keys before the first `pxt` command: it starts the daemon, and the service inherits the daemon's environment.
+A key exported later makes the next `pxt` command refuse with `STALE_CONFIG`; run `pxt daemon restart`, then `pxt service update`.
 Indexes belong on the model (`__indexes__`). Routes live on `FastAPIRouter`. No TOML route tables.
-Already have FastAPI? `app.include_router(...)` on the router in `app.py`.
+Already have FastAPI? Copy `app.py` under a project root (`pixeltable.toml`, or `pxt init`), then
+`app.include_router(...)` on the router in `app.py`.
+From plain Python, `import app` then `app.TableModel.bind_all(TARGET)` before inserting or calling `ask()`.
 
 Same file on Cloud: `pxt db update pxt://org:mydb`, then
-`pxt secret set pxt://org KEY=...`, then `pxt schema update app.py pxt://org:mydb`,
-then `pxt service update app.py pxt://org:mydb`. The secret goes first for the same reason
-the local export does: the process that answers `/ask` reads it at request time.
-Then `t = pxt.get_table('pxt://org:mydb/docs')`.
+`pxt secret set pxt://org KEY=...`, then `pxt db restart pxt://org:mydb` (pods read secrets at start),
+then `pxt schema update app.py pxt://org:mydb`, then `pxt service update app.py pxt://org:mydb`.
+Then `t = pxt.get_table('pxt://org:mydb/knowledge')` (or `.../videos`).
 `pxt db update` packs the hosted image and workers; it is not Experiment.
 `pxt schema update` applies tables. It does not start HTTP.
 `pxt service update` starts HTTP (local or `pxt://`) and prints where with `pxt service list`.
 Experiment on Cloud is dashboard insert plus `pxt schema diff`.
-`pxt db update` packs the hosted image and workers; it is not Experiment.
 
 Drift check: `uv run pxt schema diff app.py agent` (or `videointel`). Exit 0 in sync, 2 pending
-(`--json` is the plan), 1 an error naming the file, declaration, or key. Then `pxt schema update`.
-Destructive ops need `--allow-destructive`.
+(`--json` is the plan), 1 an error naming the file, declaration, or key, 3 refused (a destructive
+change without `--allow-destructive`, or a non-interactive run without `-f`). Then `pxt schema update`.
+Destructive ops need `--allow-destructive`; CI and Dockerfiles pass `-f`.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-...        # before the first pxt command

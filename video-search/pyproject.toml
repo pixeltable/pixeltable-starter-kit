@@ -3,11 +3,11 @@ name = "video-search"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "pixeltable[serve]>=0.7.5",
+    "pixeltable[serve]>=0.7.8",
     "pillow>=10.0",
     "psycopg[binary]>=3.1",
-    "torch>=2.0",
-    "transformers>=4.30",
+    "torch>=2.11",
+    "transformers>=5.6",
 ]
 
 [build-system]

@@ -1,7 +1,7 @@
 """pxt schema update app.py agent && pxt service update app.py agent
 
-Export ANTHROPIC_API_KEY before the first pxt command; see README.md for why.
-Recovery: pxt daemon restart, pxt service stop agent, then pxt service update app.py agent.
+Export ANTHROPIC_API_KEY before the first pxt command; the service inherits the daemon's environment.
+Exported it later? The CLI refuses with STALE_CONFIG: run pxt daemon restart, then pxt service update app.py agent.
 """
 
 # ruff: noqa: F821
@@ -102,17 +102,16 @@ class Agent(TableModel, name="agent"):
     conversation_id: pxt.String
     system_prompt: pxt.String
     max_tokens: pxt.Int
-    temperature: pxt.Float
     uuid = pxt.Column(value=pxtf.uuid.uuid7(), primary_key=True)
     timestamp: pxt.Timestamp | None
     memory_context = recall_memory(prompt)
     knowledge_context = search_knowledge(prompt)
     context = assemble_context(prompt, memory_context, knowledge_context)
     final_response = messages(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-5",
         messages=[{"role": "user", "content": context}],
         max_tokens=max_tokens,
-        model_kwargs={"system": system_prompt, "temperature": temperature},
+        model_kwargs={"system": system_prompt},
     )
     answer = final_response.content[0].text.astype(pxt.String)
 
@@ -134,11 +133,10 @@ api.add_delete_route(Knowledge, path="/delete/knowledge")
 api.add_delete_route(Conversations, path="/delete/conversation")
 
 
+# Models are bound to their tables by `pxt service` (at the TARGET being served, local or pxt://).
+# From plain Python, call TableModel.bind_all("agent") after `import app`.
 def _append_turns(question: str, answer: str, conversation_id: str, ts: datetime) -> None:
-    conversations = pxt.get_table("agent.conversations", if_not_exists="ignore")
-    if conversations is None:
-        return
-    conversations.insert(
+    Conversations.insert(
         [
             {
                 "role": "user",
@@ -164,20 +162,20 @@ def ask(
     *,
     system_prompt: str | None = None,
     max_tokens: int = 1024,
-    temperature: float = 0.7,
 ) -> str:
-    agent = pxt.get_table("agent.agent", if_not_exists="ignore")
-    if agent is None:
-        raise RuntimeError("Tables not materialized. Run: pxt schema update app.py agent")
+    if not Agent.is_bound:
+        raise RuntimeError(
+            "Models are not bound to tables. Run `pxt schema update app.py agent`, "
+            "then `TableModel.bind_all('agent')` before calling ask() from plain Python."
+        )
     ts = datetime.now()
-    status = agent.insert(
+    status = Agent.insert(
         [
             {
                 "prompt": question,
                 "conversation_id": conversation_id,
                 "system_prompt": system_prompt or _DEFAULT_SYSTEM,
                 "max_tokens": max_tokens,
-                "temperature": temperature,
                 "timestamp": ts,
             }
         ],
@@ -195,7 +193,6 @@ class AskRequest(pydantic.BaseModel):
     conversation_id: str = "default"
     system_prompt: str | None = None
     max_tokens: int = 1024
-    temperature: float = 0.7
 
 
 class AskResponse(pydantic.BaseModel):
@@ -214,7 +211,6 @@ def ask_http(body: AskRequest) -> AskResponse:
                 body.conversation_id,
                 system_prompt=body.system_prompt,
                 max_tokens=body.max_tokens,
-                temperature=body.temperature,
             )
         )
     except pxt.Error as exc:

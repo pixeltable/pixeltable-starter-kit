@@ -61,14 +61,27 @@ class TestAppPyprojectToml:
             f"{app}: pyproject floor >={floor} but uv.lock pins {locked}; bump the floor and re-run `uv lock` together"
         )
 
-    def test_chat_agent_anthropic_below_v1(self) -> None:
+    def test_chat_agent_anthropic_v1_or_later(self) -> None:
+        """pixeltable>=0.7.8 imports httpx2, which only ships with anthropic>=1.3.
+
+        An anthropic<1 pin resolves httpx 0.28.x and fails at import time inside
+        pixeltable.functions.anthropic, so the floor must stay at 1.3 or above.
+        """
         cfg = _load_toml(str(ROOT / "chat-agent" / "pyproject.toml"))
         deps = cfg["project"].get("dependencies", [])
-        assert any(d.startswith("anthropic") and "<1" in d for d in deps), (
-            "anthropic<1 caps httpx<1, which is what holds the lock at httpx 0.28.x; "
-            "pixeltable only declares httpx>=0.27, so dropping this cap moves httpx "
-            "and the failure lands at request time, not install time"
-        )
+        anthropic = [d for d in deps if d.startswith("anthropic")]
+        assert len(anthropic) == 1, f"chat-agent must declare exactly one anthropic dependency, got {anthropic}"
+        spec = anthropic[0]
+        assert "<1" not in spec, f"anthropic<1 is incompatible with pixeltable>=0.7.8 (httpx2), got {spec!r}"
+        m = re.search(r">=\s*(\d+)\.(\d+)", spec)
+        assert m is not None, f"chat-agent must declare an anthropic floor, got {spec!r}"
+        assert (int(m.group(1)), int(m.group(2))) >= (1, 3), f"anthropic floor must be >=1.3, got {spec!r}"
+
+    def test_chat_agent_no_sampling_params(self) -> None:
+        """anthropic>=1.0 removed temperature/top_p/top_k from messages.create; passing them raises TypeError."""
+        source = (ROOT / "chat-agent" / "app.py").read_text(encoding="utf-8")
+        for token in ("temperature", "top_p", "top_k"):
+            assert token not in source, f"chat-agent/app.py passes {token}; anthropic SDK 1.x rejects it"
 
 
 class TestProjectRoot:

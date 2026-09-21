@@ -3,8 +3,9 @@
 Two apps. Each is one application file (`app.py`).
 Declare, Experiment, Serve: `pxt schema update`, then `pxt service update`, then insert, `/ask`, or `pxt dashboard`.
 
-**Export your API keys before the first `pxt` command** -- the service inherits the daemon's environment, so a
-key exported afterwards never reaches `/ask`. Why, and how to recover: [chat-agent/README.md](chat-agent/README.md).
+**Export your API keys before the first `pxt` command** -- the service inherits the daemon's environment. Export a
+key afterwards and the next `pxt` command refuses with `STALE_CONFIG` until `pxt daemon restart`.
+Why, and how to recover: [chat-agent/README.md](chat-agent/README.md).
 
 ## Chat agent
 
@@ -52,7 +53,8 @@ curl -s -X POST http://127.0.0.1:<port>/api/ingest/image \
 
 Video ingest is a background job. Poll `job_url` from the insert response.
 
-Already have FastAPI: apply the file, then `app.include_router(api)` on the router in `app.py`.
+Already have FastAPI: copy `app.py` under a project root (`pixeltable.toml`, or run `pxt init`), apply it, then
+`app.include_router(api)` on the router in `app.py`.
 
 ## Same file, hosted
 
@@ -62,7 +64,8 @@ uv run pxt schema update app.py pxt://org:mydb
 uv run pxt service update app.py pxt://org:mydb
 ```
 
-Chat agent `/ask` also needs `pxt secret set pxt://org ANTHROPIC_API_KEY=sk-...` before schema update.
+Chat agent `/ask` also needs `pxt secret set pxt://org ANTHROPIC_API_KEY=sk-...`, then `pxt db restart pxt://org:mydb`
+so the pods read it, before schema update.
 Experiment on Cloud is dashboard insert plus `pxt schema diff`.
 [Cloud](https://docs.pixeltable.com/howto/deployment/cloud).
 
@@ -79,7 +82,7 @@ Drift check and exit codes: [AGENTS.md](AGENTS.md).
 Layout and tests: [AGENTS.md](AGENTS.md).
 Skill: `npx skills add pixeltable/pixeltable-skill`.
 
-Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.5`.
+Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.8`.
 
 ## Resources
 

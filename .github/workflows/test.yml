@@ -169,7 +169,7 @@ jobs:
               if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
                 if curl -sf -X POST "http://127.0.0.1:${CHAT_PORT}/api/ask" \
                   -H "Content-Type: application/json" \
-                  -d '{"prompt": "What is Pixeltable?", "conversation_id": "ci", "system_prompt": "Be concise.", "max_tokens": 64, "temperature": 0.0}' \
+                  -d '{"prompt": "What is Pixeltable?", "conversation_id": "ci", "system_prompt": "Be concise.", "max_tokens": 64}' \
                   >/dev/null; then
                   echo "OK  chat-agent"
                   RESULTS+=("OK  chat-agent")
