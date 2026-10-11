@@ -82,7 +82,7 @@ Drift check and exit codes: [AGENTS.md](AGENTS.md).
 Layout and tests: [AGENTS.md](AGENTS.md).
 Skill: `npx skills add pixeltable/pixeltable-skill`.
 
-Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.8`.
+Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.16`.
 
 ## Resources
 
