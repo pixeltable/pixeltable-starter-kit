@@ -5,7 +5,7 @@
 #   bash .devcontainer/cloud.sh video-search
 #   bash .devcontainer/cloud.sh chat-agent pxt://org:db  # a database you already have, after `pxt login`
 #
-# Safe to rerun: `pxt new` returns the trial this machine already has, and each update applies only what changed.
+# Safe to rerun: `pxt new` returns this machine's trial; setting an Anthropic key also restarts the database.
 set -euo pipefail
 
 app="${1:-chat-agent}"
@@ -28,6 +28,9 @@ if [ -z "$uri" ]; then
   fi
   uri="pxt://$(json 'd["org"] + ":" + d["db"]' <<<"$trial")"
   claim_url="$(json 'd["claim_url"] or ""' <<<"$trial")"
+  if [ -n "$claim_url" ]; then
+    echo "Claim this trial to keep it past 48 hours (one sign-in): $claim_url"
+  fi
 fi
 org="${uri#pxt://}"
 org="${org%%:*}"
@@ -43,13 +46,18 @@ for _ in $(seq 60); do
   echo "==> $uri is $state, waiting"
   sleep 10
 done
-
-if [ "$app" = chat-agent ] && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-  pxt secret set "pxt://$org" "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
+if [ "$state" != AVAILABLE ]; then
+  echo "$uri provisioning timed out after 10 minutes (last state: $state); see: pxt db status $uri" >&2
+  exit 1
 fi
 
 echo "==> Uploading $app to $uri"
 pxt db update "$uri" -f
+if [ "$app" = chat-agent ] && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+  pxt secret set "pxt://$org" "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
+  # Update the image first, then restart so even an unchanged deployment reads the new secret.
+  pxt db restart "$uri"
+fi
 echo "==> Creating tables"
 pxt schema update app.py "$uri" -f
 echo "==> Starting the service"
@@ -75,13 +83,13 @@ client = httpx.Client(base_url=endpoint, headers={"X-api-key": key}, timeout=120
 doc = {"title": "hello", "source": "cloud.sh", "body": "Pixeltable stores, transforms, and serves data in one app.py."}
 inserted = client.post("/api/knowledge", json=doc)
 print(f"POST /api/knowledge -> {inserted.status_code} {inserted.text[:200]}")
-found = client.get("/api/knowledge/search", params={"query_text": "What does Pixeltable do?", "limit": 1})
+if not inserted.is_success:
+    sys.exit(1)
+found = client.get("/api/knowledge/search", params={"query_text": doc["body"], "limit": 1})
 print(f"GET /api/knowledge/search -> {found.status_code} {found.text[:200]}")
-sys.exit(0 if inserted.is_success and found.is_success else 1)
+if not found.is_success:
+    sys.exit(1)
+if not any(row.get("text") == doc["body"] for row in found.json().get("rows", [])):
+    sys.exit("Search did not return the inserted document.")
 EOF
-fi
-
-if [ -n "${claim_url:-}" ]; then
-  echo
-  echo "Claim this trial to keep it past 48 hours (one sign-in): $claim_url"
 fi

@@ -18,7 +18,9 @@ bash .devcontainer/cloud.sh
 ```
 
 `pxt new` gives you a free Cloud database for 48 hours. The script uploads the chat agent, creates its tables,
-starts its service, and calls it once. Open the link it prints to claim the trial and keep it.
+starts its service, and verifies that search returns the document it inserts. It prints the claim link before
+deployment so you can keep the trial even if a later step fails. Reruns reuse the trial; supplying
+`ANTHROPIC_API_KEY` sets the secret and restarts the database so `/ask` can use it.
 `bash .devcontainer/cloud.sh video-search` deploys the other app. From a local clone it runs the same way; it needs `uv`.
 
 ## Chat agent
