@@ -1,11 +1,25 @@
 # Pixeltable Starter Kit
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pixeltable/pixeltable-starter-kit)
+
 Two apps. Each is one application file (`app.py`).
 Declare, Experiment, Serve: `pxt schema update`, then `pxt service update`, then insert, `/ask`, or `pxt dashboard`.
 
 **Export your API keys before the first `pxt` command** -- the service inherits the daemon's environment. Export a
 key afterwards and the next `pxt` command refuses with `STALE_CONFIG` until `pxt daemon restart`.
 Why, and how to recover: [chat-agent/README.md](chat-agent/README.md).
+
+## Try it on Pixeltable Cloud, no account
+
+Open a codespace with the button above, then:
+
+```bash
+bash .devcontainer/cloud.sh
+```
+
+`pxt new` gives you a free Cloud database for 48 hours. The script uploads the chat agent, creates its tables,
+starts its service, and calls it once. Open the link it prints to claim the trial and keep it.
+`bash .devcontainer/cloud.sh video-search` deploys the other app. From a local clone it runs the same way; it needs `uv`.
 
 ## Chat agent
 

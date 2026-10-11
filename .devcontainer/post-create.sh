@@ -17,6 +17,12 @@ done
 echo
 echo "==> Dev container ready"
 echo
+echo "    Run the chat agent on Pixeltable Cloud, free for 48 hours, no account:"
+echo
+echo "      bash .devcontainer/cloud.sh"
+echo
+echo "    Or run it here:"
+echo
 echo "    Export your key first (see chat-agent/README.md for why):"
 echo
 echo "      export ANTHROPIC_API_KEY=sk-...      # only /ask needs this"
