@@ -19,6 +19,14 @@
     "PIXELTABLE_HOME": "/home/vscode/.pixeltable"
   },
 
+  // Listed on the codespace creation page; leaving it empty is fine.
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Optional. Only the chat agent's /ask route needs it.",
+      "documentationUrl": "https://console.anthropic.com/settings/keys"
+    }
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [

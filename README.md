@@ -1,11 +1,27 @@
 # Pixeltable Starter Kit
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pixeltable/pixeltable-starter-kit)
+
 Two apps. Each is one application file (`app.py`).
 Declare, Experiment, Serve: `pxt schema update`, then `pxt service update`, then insert, `/ask`, or `pxt dashboard`.
 
 **Export your API keys before the first `pxt` command** -- the service inherits the daemon's environment. Export a
 key afterwards and the next `pxt` command refuses with `STALE_CONFIG` until `pxt daemon restart`.
 Why, and how to recover: [chat-agent/README.md](chat-agent/README.md).
+
+## Try it on Pixeltable Cloud, no account
+
+Open a codespace with the button above, then:
+
+```bash
+bash .devcontainer/cloud.sh
+```
+
+`pxt new` gives you a free Cloud database for 48 hours. The script uploads the chat agent, creates its tables,
+starts its service, and verifies that search returns the document it inserts. It prints the claim link before
+deployment so you can keep the trial even if a later step fails. Reruns reuse the trial; supplying
+`ANTHROPIC_API_KEY` sets the secret and restarts the database so `/ask` can use it.
+`bash .devcontainer/cloud.sh video-search` deploys the other app. From a local clone it runs the same way; it needs `uv`.
 
 ## Chat agent
 
@@ -82,7 +98,7 @@ Drift check and exit codes: [AGENTS.md](AGENTS.md).
 Layout and tests: [AGENTS.md](AGENTS.md).
 Skill: `npx skills add pixeltable/pixeltable-skill`.
 
-Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.8`.
+Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.16`.
 
 ## Resources
 

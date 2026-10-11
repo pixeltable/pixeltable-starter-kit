@@ -8,7 +8,7 @@ cd pixeltable-starter-kit
 uv sync
 ```
 
-Apps require `pixeltable[serve]>=0.7.8` and Python 3.11+. HuggingFace
+Apps require `pixeltable[serve]>=0.7.16` and Python 3.11+. HuggingFace
 sentence-transformer embeddings require sentence-transformers 5.6.0+.
 The chat agent requires `anthropic>=1.3`: pixeltable 0.7.8+ imports `httpx2`, which
 older SDKs do not ship, and SDK 1.x rejects `temperature`/`top_p`/`top_k`.
