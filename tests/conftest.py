@@ -8,7 +8,7 @@ import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-APPS: list[str] = ["chat-agent", "video-search"]
+APPS: list[str] = ["chat-agent", "video-search", "openai-360"]
 
 EXPECTED_FILES: dict[str, list[str]] = {
     "chat-agent": [
@@ -22,6 +22,14 @@ EXPECTED_FILES: dict[str, list[str]] = {
         "pyproject.toml",
         "pixeltable.toml",
         "app.py",
+        "Dockerfile",
+        "docker-compose.yml",
+    ],
+    "openai-360": [
+        "pyproject.toml",
+        "pixeltable.toml",
+        "app.py",
+        "seed.py",
         "Dockerfile",
         "docker-compose.yml",
     ],

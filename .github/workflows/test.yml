@@ -41,8 +41,8 @@ jobs:
         run: uv sync
       - name: Lint
         run: |
-          uv run ruff check video-search/ chat-agent/ tests/
-          uv run ruff format video-search/ chat-agent/ tests/ --check
+          uv run ruff check video-search/ chat-agent/ openai-360/ tests/
+          uv run ruff format video-search/ chat-agent/ openai-360/ tests/ --check
       - name: Test
         run: uv run python -m pytest tests/ -v --tb=short
 
@@ -64,6 +64,7 @@ jobs:
         run: |
           cd chat-agent && uv sync
           cd ../video-search && uv sync
+          cd ../openai-360 && uv sync
       - name: Run schema import smoke tests
         run: uv run python -m pytest tests/test_schema.py -v --run-slow --tb=short
       - name: Apply each schema to a real catalog
@@ -72,10 +73,11 @@ jobs:
           # `import app` proves the file parses and the models construct. It does not prove the
           # reconciler accepts them: a bad base=, a duplicate index name or an unsupported column
           # property imports cleanly and fails at update. This catches that, and needs no API key.
-          for app in chat-agent video-search; do
+          for app in chat-agent video-search openai-360; do
             case "$app" in
               chat-agent)   target=agent ;;
               video-search) target=videointel ;;
+              openai-360)   target=claims ;;
             esac
             echo "=== $app -> $target ==="
             home="$RUNNER_TEMP/pxt-schema-$app"

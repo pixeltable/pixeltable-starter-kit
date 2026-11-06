@@ -2,7 +2,7 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pixeltable/pixeltable-starter-kit)
 
-Two apps. Each is one application file (`app.py`).
+Three apps. Each is one application file (`app.py`).
 Declare, Experiment, Serve: `pxt schema update`, then `pxt service update`, then insert, `/ask`, or `pxt dashboard`.
 
 **Export your API keys before the first `pxt` command** -- the service inherits the daemon's environment. Export a
@@ -69,6 +69,21 @@ curl -s -X POST http://127.0.0.1:<port>/api/ingest/image \
 
 Video ingest is a background job. Poll `job_url` from the insert response.
 
+## OpenAI 360
+
+A warranty claims desk. A claim arrives as a photo and a voice note, and six OpenAI endpoints in one table
+transcribe it, screen it, ask the Decisions API about it, and draft and speak a reply for the claims it approves.
+
+```bash
+export OPENAI_API_KEY=sk-...           # before the first pxt command
+cd openai-360 && uv sync
+uv run pxt schema update app.py claims
+uv run python seed.py                  # four generated demo claims
+uv run pxt service update app.py claims
+```
+
+What runs, and how to look inside: [openai-360/README.md](openai-360/README.md).
+
 Already have FastAPI: copy `app.py` under a project root (`pixeltable.toml`, or run `pxt init`), apply it, then
 `app.include_router(api)` on the router in `app.py`.
 
@@ -98,7 +113,7 @@ Drift check and exit codes: [AGENTS.md](AGENTS.md).
 Layout and tests: [AGENTS.md](AGENTS.md).
 Skill: `npx skills add pixeltable/pixeltable-skill`.
 
-Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.16`.
+Python 3.11+. `uv sync` installs `pixeltable[serve]>=0.7.23`.
 
 ## Resources
 

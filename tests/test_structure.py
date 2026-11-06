@@ -36,7 +36,7 @@ _HOSTED_SERVICE_RUN_RE = re.compile(r"pxt service run[^\n]*pxt://")
 _HOSTED_SERVICE_UPDATE = "pxt service update app.py pxt://"
 
 _CONTRACT_MD_FILES: tuple[str, ...] = ("README.md", "AGENTS.md", "CONTRIBUTING.md")
-_CONTRACT_MD_DIRS: tuple[str, ...] = ("chat-agent", "video-search")
+_CONTRACT_MD_DIRS: tuple[str, ...] = ("chat-agent", "video-search", "openai-360")
 
 
 def _contract_markdown_files() -> list[pathlib.Path]:
@@ -194,6 +194,7 @@ class TestNoAntiPatterns:
         scan_roots = [
             ROOT / "chat-agent",
             ROOT / "video-search",
+            ROOT / "openai-360",
             ROOT / "README.md",
             ROOT / "AGENTS.md",
             ROOT / "CONTRIBUTING.md",

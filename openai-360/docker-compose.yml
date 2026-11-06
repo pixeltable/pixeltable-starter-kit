@@ -1,0 +1,15 @@
+services:
+  serve:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PIXELTABLE_HOME=/data/pixeltable
+      # Bare name: passes the value through from the shell running `docker compose up`,
+      # and is omitted entirely when unset. `KEY: ${KEY}` would inject an empty string.
+      - OPENAI_API_KEY
+    volumes:
+      - pxt-data:/data/pixeltable
+
+volumes:
+  pxt-data:

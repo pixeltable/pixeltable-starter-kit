@@ -44,11 +44,12 @@ Video: `uvx pixeltable-new myapp --video`, then TARGET `videointel`.
 ```
 video-search/   Frames, CLIP, images. TARGET videointel. uvx --video
 chat-agent/     Knowledge, memory, LLM. TARGET agent. uvx default
+openai-360/     Photo + voice claims, six OpenAI calls. TARGET claims. Clone only
 tests/          Structure and config. Schema smoke: --run-slow.
 ```
 
 Do not add `templates/`, `backend/`, `serving/`, `batch/`, or a PaaS `deploy/` zoo.
-New verticals: edit `app.py` or add a folder next to these two with the same apply path.
+New verticals: edit `app.py` or add a folder next to these with the same apply path.
 
 ## Extend an app
 
@@ -66,15 +67,15 @@ Similarity uses `string=`: `col.similarity(string=query)`. In `@pxt.query`, alia
 
 ```bash
 uv sync
-uv run ruff check video-search/ chat-agent/ tests/
-uv run ruff format video-search/ chat-agent/ tests/ --check
+uv run ruff check video-search/ chat-agent/ openai-360/ tests/
+uv run ruff format video-search/ chat-agent/ openai-360/ tests/ --check
 uv run python -m pytest tests/ -v
 ```
 
 Schema import smoke (needs Pixeltable in each app venv):
 
 ```bash
-cd chat-agent && uv sync && cd ../video-search && uv sync && cd ..
+cd chat-agent && uv sync && cd ../video-search && uv sync && cd ../openai-360 && uv sync && cd ..
 uv run python -m pytest tests/test_schema.py -v --run-slow
 ```
 

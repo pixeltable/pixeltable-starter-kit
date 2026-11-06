@@ -1,0 +1,15 @@
+[project]
+name = "openai-360"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pixeltable[serve]>=0.7.23",
+    "openai>=3.32",
+]
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["app", "seed"]
