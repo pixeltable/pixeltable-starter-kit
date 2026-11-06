@@ -17,8 +17,8 @@ older SDKs do not ship, and SDK 1.x rejects `temperature`/`top_p`/`top_k`.
 
 ```bash
 uv sync
-uv run ruff check video-search/ chat-agent/ tests/
-uv run ruff format video-search/ chat-agent/ tests/ --check
+uv run ruff check video-search/ chat-agent/ openai-360/ tests/
+uv run ruff format video-search/ chat-agent/ openai-360/ tests/ --check
 uv run python -m pytest tests/ -v
 ```
 

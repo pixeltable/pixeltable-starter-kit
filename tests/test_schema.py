@@ -23,6 +23,7 @@ pytestmark = pytest.mark.slow
 _SCHEMA_TARGETS: list[tuple[str, str]] = [
     (str(ROOT / "chat-agent"), 'import app; print("OK")'),
     (str(ROOT / "video-search"), 'import app; print("OK")'),
+    (str(ROOT / "openai-360"), 'import app; print("OK")'),
 ]
 
 
